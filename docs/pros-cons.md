@@ -1,0 +1,60 @@
+# Pros and cons of notebooks and the Binderhub structure
+
+## Advantages
+
+### Notebooks
+
+Notebooks, in particular the Jupyter notebooks, are nowadays common.
+Thus, they provide a familiar interface to a set of users, with lots of additional information to be found.
+
+Notebooks are also easier to share, in particular to demonstrate something or use for show cases.
+
+The JupyterLab extension provides an interface that gets close to an IDE or virtual machine, including shell access.
+This should feel very familiar to the majority of users: an editor and terminal are familiar to a large set of users.
+In addition, there is the possibility to have one or more notebooks open for experimentation.
+
+Development for the notebooks is still ongoing (thanks to their popularity).
+While this is not particular tied to notebooks, it potentially allows for rapid fixes of the notebook or the infrastructure surrounding it.
+
+### BinderHub infrastructure
+
+BinderHub is the system that runs Jupyter notebooks or labs for a multitude of users, each with their own specific container.
+
+The BinderHub infrastructure makes uses of Docker containers, and often runs on Kubernetes.
+Both are tested and tried,  and common pieces of infrastructure, making it straightforward to deploy BinderHub.
+Documentation is also geared towards this setup, and makes it even easier to deploy BinderHub.
+
+
+## Disadvantages and caveats
+
+### Notebooks
+
+Notebooks are not ideal for every situation.
+In particular, cells can be executed out of order, causing state problems later in the notebook, which may impede reproducibility.
+Tools are (slowly) being developed to help avoid this issue, but it is largely in the developer's and user's hands to use a notebook in order.
+"Plain" programs (programs and scripts executed directly on the command line) do not have this issue.
+
+Notebooks are not ideal for writing (and using) larger pieces of code that need to stick together, such as classes with several methods: such a class would have to be written inside one (large) cell.
+Such pieces of code should be moved into their own module or package, and imported in the notebook.
+This could be done using the binder system, where local code in a repository are added in addition to generic libraries and packages.
+This, however, requires user's expertise which may not be available, or an effort that users may not be willing to make.
+
+If the notebook interface is closed (that is, the browser page is closed), execution of a currently running cell will still continue, but the output will not be available; even when re-attaching to the notebook.
+Thus, users have to learn to save all outputs from longer running task to a file *in the container image* (not to their local disk), and retrieve that later.
+While this is similar to running a long-running job on, for example, a specialized cluster or high-performance machine, it may be somewhat unexpected in a notebook, where output is usually directly in the notebook.
+
+For the above scenarios, using a plain program in a notebook Lab environment may be better: this program could be edited online (with the caveat that this editor is likely far from a user's favorite editor), and run on the command line provided by the lab terminal.
+A Lab environment may also allow to combine several scripts in, for example, a bash script, so that a set of simple, task-specific, scripts can be run in a chain on the command line.
+Since notebooks have not been set out for this task, it remains yet to be seen how well this workflow really works.
+
+### BinderHub infrastructure
+
+Using a Docker container for each user and notebook poses extra strains on the system, mostly in terms of disk space: each container is essentially a full-blown operating system, with a multitude of packages installed.
+Disk space is relatively cheap, so this may not be a problem, but it may be something to consider.
+
+Kubernetes Pods make communication perhaps safer, but also more difficult.
+This holds in particular for file sharing: if this has to be done over http protocols, this will be slow and cumbersome.
+A direct (NFS) file system share may be a lot easier and quicker to set up and maintain.
+Therefore, it may be easier, and more practical, to run BinderHub on a single (virtual) machine: it would then fire off containers that connect to the local machine for data access and sharing.
+This bypasses the Kubernetes infrastructure, but since the default BinderHub uses this by default, it requires some work-arounds.
+The bits and pieces of BinderHub can be used, but may have to be reconnected in a slightly different way.

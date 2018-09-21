@@ -1,0 +1,94 @@
+= EUCP Notebook
+
+31-08-2018
+
+A notebook system for climate research.
+
+Note: this document is work in progress.
+This README will be shortened in the near future to provide a summary, with other documents providing details for the different sections.
+
+== Goals
+
+This repository documents a notebook system for possible use within the European Climate Prediction (EUCP) system project.
+A notebook system allows scientists to use a uniform interface to perform their analysis on climate data sets, without the need to download the required data sets locally.
+The use of notebooks also allows easy sharing, for example with peers (direct collaborators, referees etc.) and a more general audience.
+In addition, the analysis steps are to be saved (including history versioning) for reproducibility.
+
+
+== Implementation
+
+The notebook implementation to use is the Jupyter notebook.
+This started originally as an extended Python interactive interpreter, and has evolved with a variety of extensions.
+One of its main uses is in data analysis, since it includes output, including visualisations, directly in the notebook.
+In addition, Python is widely used in the sciences for analysis, and nowadays a wide variety of packages (libraries) exist to help with that.
+Note that, while the Jupyter notebook comes from the Python world and is largely programmed in Python (with lots of JavaScript on the user interface side), it allows a variety of "kernels" to run in the notebooks.
+This includes kernels for R and Julia, as well as various Python versions (notably, versions 2.x versus 3.x).
+In all cases, the notebook simply functions as an mediator, passing input from the user to the relevant interpreter or compiler behind the scenes, and output from the interpreter or compiler back to the user.
+
+The widespread use of the Jupyter notebook should help with its usage: many users may not have to learn a new interface, or they may easily find help (either from (local) colleagues or on the internet) with its use.
+
+=== Lab environment
+
+The Jupyter notebook environment has been extended to include a shell environment with a command line and a text editor, and the option to start multiple sessions and kernels (e.g., Python 2, Python 3, R, Julia) all from the same session.
+This is now called [JupyterLab](http://jupyterlab.readthedocs.io/en/latest/).
+
+Like the notebook, JupyterLab can be run locally (`python -m jupyter lab` from the command line), or, for the case here, remotely through a web browser.
+
+=== Hub
+
+The JupyterHub is a system where multiple users can start a notebook (or lab) on the same server: each notebook is separate from the other notebooks.
+JupyterHub is the underlying system for remote use of Jupyter notebooks / labs.
+
+
+=== Binders
+
+A recent development are notebook binders.
+These use (often very simple) repositories that lists required packages (how this is to be listed, depends on the language to be used in the notebook).
+The binder interface will accept a link to the repository, and create a notebook environment with those packages installed.
+This allows anyone to tweak their notebook to their needs.
+In addition, notebook files (`*.ipynb`) can be saved in the same repository.
+This makes it straightforward for others to recreate the environment, *and* load the relevant notebook.
+
+For generic use, one or a few notebook environments will be given as an option to select from, so that users do not need to create a repository first.
+In addition, notebooks also accept a `!pip install <package>` syntax (and similar for R and Julia), which escapes the notebook session (thanks to the `!`) and will install the relevant package.
+This last option is more a quick-fix solution; binders allow for full Conda environments to be installed.
+
+The main project for Jupyter notebooks binders is [BinderHub](https://binderhub.readthedocs.io/en/latest/).
+As the name indicates, the actual underlying infrastructure is provided by JupyterHub; BinderHub adds the option of turning a repository into a Dockerfile that can be used to start a notebook environment.
+The latter is done through a utility called `repo2docker`, which is developed within the larger [JupyterHub project](https://github.com/jupyterhub).
+
+A demonstration page (that can actually be used already!) is at https://mybinder.org/.
+
+=== Example cases
+
+Note: some of the mybinder examples may take some time to load.
+
+See also https://mybinder.readthedocs.io/en/latest/sample_repos.html
+
+- Julia and Python notebook: http://mybinder.org/v2/gh/binder-examples/julia_python/master
+
+  Once loaded, change this example to a JupyterLab environment by changing the `tree` bit at the end of the URL into `lab`.
+
+- R notebook: https://hub.mybinder.org/user/binder-examples-r-huwjm759/notebooks/index.ipynb
+
+- R studio environment: https://mybinder.org/v2/gh/ha0ye/RainCloudPlots/master?urlpath=rstudio
+
+- Pangeo data: http://pangeo.pydata.org/hub/login
+
+  Requires a GitHub account to sign in.
+  Provides a JupyterLab environment for geoscience.
+  It allows to run multi-core processes using `dask` and `xarray` on a cloud system: this will fire off separate "pods" for the computation.
+
+  For more information, see http://pangeo.io.
+
+== More information
+
+More information is detailed in the following documents:
+
+- link:docs/architecture.md[architecture]: details on the architecture and infrastructure used by the BinderHub system
+
+- link:docs/configurations.md[configurations]: possible system configurations for a notebook system
+
+- link:docs/development.md[development]: idea on how the development of a notebook system will proceed
+
+- link:docs/pros-cons.md[procs-cons]: advantages and disadvantages of the notebook and BinderHub system.
