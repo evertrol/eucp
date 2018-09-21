@@ -1,6 +1,6 @@
-### Potential system configurations
+= Potential system configurations
 
-#### Kubernetes
+== Kubernetes
 
 The default system configuration for BinderHub is a Kubernetes system: multiple pods, each pod with a specific Docker container for a specific user.
 The Docker container is created with the `repo2docker`.
@@ -13,7 +13,7 @@ Usually, such data access is through network protocol: http is the standard prot
 Solutions for data access on a Kubernetes system exist, often through a specialized data store (like S3).
 This, however, may be slow or generally inconvenient, especially in the case of transferring many or large files.
 
-#### Single (virtual) machine, many containers
+== Single (virtual) machine, many containers
 
 Using a single machine would allow for use of the usual Unix-style permissions: user, group and world read, write and execute.
 This, however, would lose the possibility of running separate containers for each user.
