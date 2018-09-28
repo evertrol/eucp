@@ -1,27 +1,28 @@
 = EUCP Notebook
 
-31-08-2018
+Last update: 28-09-2018
 
 A notebook system for climate research.
 
-Note: this document is work in progress.
-This README will be shortened in the near future to provide a summary, with other documents providing details for the different sections.
+This document is work in progress.
 
 == Goals
 
-This repository documents a notebook system for possible use within the European Climate Prediction (EUCP) system project.
-A notebook system allows scientists to use a uniform interface to perform their analysis on climate data sets, without the need to download the required data sets locally.
-The use of notebooks also allows easy sharing, for example with peers (direct collaborators, referees etc.) and a more general audience.
+This repository documents a notebook system for possible use within the European Climate Prediction (EUCP) project.
+A notebook system allows scientists to use a uniform interface to perform their analysis on climate data sets.
+It can run on the same server where the data is stored (or very close to a data server), removing the need to download the required data sets locally.
+The use of notebooks also allows easier sharing of analysis, for example with peers (direct collaborators, referees etc.) and a more general audience.
 In addition, the analysis steps are to be saved (including history versioning) for reproducibility.
 
 
 == Implementation
 
-The notebook implementation to use is the Jupyter notebook.
-This started originally as an extended Python interactive interpreter, and has evolved with a variety of extensions.
-One of its main uses is in data analysis, since it includes output, including visualisations, directly in the notebook.
+The notebook implementation used is the Jupyter notebook.
+This notebook system started originally as an extended Python interactive interpreter, and has evolved with a variety of extensions.
+One of the main uses of Jupyter is in data analysis, since it includes output, including visualisations, directly in the notebook.
 In addition, Python is widely used in the sciences for analysis, and nowadays a wide variety of packages (libraries) exist to help with that.
-Note that, while the Jupyter notebook comes from the Python world and is largely programmed in Python (with lots of JavaScript on the user interface side), it allows a variety of "kernels" to run in the notebooks.
+
+Note that, while the Jupyter notebook comes from the Python world and is largely programmed in Python (with JavaScript at the user interface side), it allows a variety of "kernels" to run in the notebooks.
 This includes kernels for R and Julia, as well as various Python versions (notably, versions 2.x versus 3.x).
 In all cases, the notebook simply functions as an mediator, passing input from the user to the relevant interpreter or compiler behind the scenes, and output from the interpreter or compiler back to the user.
 
@@ -32,7 +33,7 @@ The widespread use of the Jupyter notebook should help with its usage: many user
 The Jupyter notebook environment has been extended to include a shell environment with a command line and a text editor, and the option to start multiple sessions and kernels (e.g., Python 2, Python 3, R, Julia) all from the same session.
 This is now called http://jupyterlab.readthedocs.io/en/latest/[JupyterLab].
 
-Like the notebook, JupyterLab can be run locally (`python -m jupyter lab` from the command line), or, for the case here, remotely through a web browser.
+Like the notebook, JupyterLab can be run locally (`python -m jupyter lab` from the command line), or, for the case here, remotely; in both cases, a web browser acts as the environment that the user will use.
 
 === Hub
 
@@ -51,7 +52,7 @@ This makes it straightforward for others to recreate the environment, **and** lo
 
 For generic use, one or a few notebook environments will be given as an option to select from, so that users do not need to create a repository first.
 In addition, notebooks also accept a `!pip install <package>` syntax (and similar for R and Julia), which escapes the notebook session (thanks to the `!`) and will install the relevant package.
-This last option is more a quick-fix solution; binders allow for full Conda environments to be installed.
+This last option is more a quick-fix solution on the user side; binders allow for full Conda environments to be installed.
 
 The main project for Jupyter notebooks binders is https://binderhub.readthedocs.io/en/latest/[BinderHub].
 As the name indicates, the actual underlying infrastructure is provided by JupyterHub; BinderHub adds the option of turning a repository into a Dockerfile that can be used to start a notebook environment.

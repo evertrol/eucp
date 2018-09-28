@@ -53,7 +53,7 @@ Using a Docker container for each user and notebook poses extra strains on the s
 Disk space is relatively cheap, so this may not be a problem, but it may be something to consider.
 
 Kubernetes Pods make communication perhaps safer, but also more difficult.
-This holds in particular for file sharing: if this has to be done over http protocols, this will be slow and cumbersome.
+This holds in particular for file sharing: if this has to be done over http protocols, this may be slow and cumbersome.
 A direct (NFS) file system share may be a lot easier and quicker to set up and maintain.
 Therefore, it may be easier, and more practical, to run BinderHub on a single (virtual) machine: it would then fire off containers that connect to the local machine for data access and sharing.
 This bypasses the Kubernetes infrastructure, but since the default BinderHub uses this by default, it requires some work-arounds.
