@@ -1,0 +1,31 @@
+- name: Set up Jupyter account and configuration
+  block:
+    - group:
+        name: jupyterhub
+        state: present
+    - user:
+        name: jupyterhub
+        group: jupyterhub
+        # Need shadow for PAM authentication
+        groups: shadow
+        create_home: no
+        password: !
+        state: present
+
+    - file:
+        path: "{{ item }}"
+        state: directory
+        owner: jupyterhub
+        group: jupyterhub
+      loop: [/srv/jupyterhub, /etc/jupyterhub]
+    - command: /usr/local/miniconda/bin/jupyterhub --generate-config -f /etc/jupyterhub/jupyterhub_config.py && chown jupyterhub:jupyterhub /etc/jupyterhub/jupyterhub_config.py
+      args:
+        creates: /etc/jupyterhub/jupyterhub_config.py
+    - lineinfile:
+        path: /etc/jupyterhub/jupyterhub_config.py
+        state: present
+        line: "{{ item }}"
+      loop:
+        - "c.JupyterHub.bind_url = 'http://server.eucp-nlesc.surf-hosted.nl:8081'"
+        - "c.Spawner.default_url = '/lab'"
+        - "c.JupyterHub.spawner_class = 'sudospawner.SudoSpawner'"

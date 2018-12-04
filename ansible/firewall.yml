@@ -1,0 +1,7 @@
+- name: Set up the firewall
+  block:
+    - ufw:
+        state: enabled
+    - ufw:
+        rule: allow
+        to_port: 8081

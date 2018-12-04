@@ -1,0 +1,27 @@
+- name: Set up systemd config for jupyterhub
+  block:
+    - copy:
+        dest: /etc/jupyterhub/jupyterhub.service
+        owner: jupyterhub
+        group: jupyterhub
+        content: |
+          [Unit]
+          Description=Jupyterhub
+          After=network-online.target
+
+          [Service]
+          Environment="PATH=/usr/local/miniconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          User=jupyterhub
+          ExecStart=/usr/local/miniconda/bin/jupyterhub
+          WorkingDirectory=/etc/jupyterhub
+
+          [Install]
+          WantedBy=multi-user.target
+    - file:
+        src: /etc/jupyterhub/jupyterhub.service
+        path: /etc/systemd/system/jupyterhub.service
+        state: link
+    - systemd:
+        name: jupyterhub
+        enabled: yes
+        state: started

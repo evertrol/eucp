@@ -1,0 +1,26 @@
+- name: Make and mount file systems in the /mnt/data directory
+  block:
+  - file:
+      path: "/mnt/data/{{ item.dir }}"
+      state: directory
+  - filesystem:
+      device: "/dev/{{ item.dev }}"
+      fstype: xfs
+  - mount:
+      path: "/mnt/data/{{ item.dir }}"
+      src: "/dev/{{ item.dev }}"
+      state: mounted
+      fstype: xfs
+
+- name: Optimize the data disks somewhat
+  block:
+    - file:
+        path: /etc/rc.d
+        state: directory
+    - file:
+        path: /etc/rc.d/rc.local
+        state: touch
+        mode: 0755
+    - lineinfile:
+        path: /etc/rc.d/rc.local
+        line: "echo 4096 > /sys/block/{{ item.dev }}/queue/read_ahead_kb"

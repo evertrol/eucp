@@ -1,0 +1,22 @@
+---
+- hosts: all
+  vars_files:
+    - mount_vars.yml
+    - user_vars.yml
+  remote_user: ubuntu
+  become: true
+
+  tasks:
+  - name: Update apt and install packages
+    apt:
+      update_cache: yes
+      name: [emacs, zsh, curl, wget, screen, tmux, ufw, whois]
+      autoremove: yes
+
+  - include: mount_storage.yml
+    loop: "{{ mounts }}"
+
+  - include: jupyterhub.yml
+
+  - include: addusers.yml
+    loop: "{{ users }}"

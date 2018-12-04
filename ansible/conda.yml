@@ -1,0 +1,25 @@
+- name: Install Conda, JupyterHub & related packages
+  block:
+    # Note: there is an Ansible Conda module, but it's not core
+    # Instead, the following relies on files or directories being created
+    - get_url:
+        url: https://repo.continuum.io/miniconda/Miniconda3-3.7.0-Linux-x86_64.sh
+        dest: /tmp
+    - command: bash /tmp/Miniconda3-3.7.0-Linux-x86_64.sh -b -p /usr/local/miniconda
+      args:
+        creates: /usr/local/miniconda
+    - command: /usr/local/miniconda/bin/conda update --yes --quiet conda
+    - command: /usr/local/miniconda/bin/conda install --yes --quiet --channel conda-forge python=3.6
+      args:
+        creates: /usr/local/miniconda/lib/python3.6/
+    - command: /usr/local/miniconda/bin/conda install --yes --quiet --channel conda-forge {{ item }}
+      args:
+        creates: /usr/local/miniconda/lib/python3.6/site-packages/{{ item }}/
+      loop: [jupyterhub, notebook, jupyterlab, sudospawner, ipywidgets]
+
+    - command: /usr/local/miniconda/bin/jupyter labextension install @{{ item.scope }}/{{ item.ext }}
+      args:
+        creates: /usr/local/miniconda/share/jupyter/lab/extensions/{{ item.scope }}-{{ item.ext }}-*.tgz
+      loop:
+        - { scope: jupyterlab, ext: hub-extension }
+        - { scope: jupyter-widgets, ext: jupyterlab-manager }
