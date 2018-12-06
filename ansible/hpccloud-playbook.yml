@@ -18,5 +18,9 @@
 
   - include: jupyterhub.yml
 
+  - include: setup_umask.yml
+
   - include: addusers.yml
     loop: "{{ users }}"
+
+  - include: ssh_access.yml
