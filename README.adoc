@@ -4,26 +4,26 @@ A notebook and data sharing system for climate research.
 
 This document is work in progress.
 
-Last update: 5-12-2018
+Last update: 6-12-2018
 
 
 == Goals
 
-This repository documents a notebook and data sharing system for use within the European Climate Prediction (EUCP) project.
+This repository documents the infrastructure for a notebook and data sharing system for use within the European Climate Prediction (EUCP) project.
 
-A notebook system allows scientists to use a uniform interface to perform their analysis on climate data sets.
-It should run on the same server where the data is stored, or very close to a data server, removing the need to download the required data sets locally.
+The notebook system allows scientists to use a uniform interface to perform their analysis on climate data sets.
+It runs on the same server where the data is stored, or very close to a data server, removing the need to download the required data sets locally.
 Data access should also be easy, and fast.
 The use of notebooks also allows easier sharing of analysis, for example with peers (direct collaborators, referees etc.) and a more general audience.
 In addition, the analysis steps are to be saved (including history versioning) for reproducibility.
 
 == Resources
 
-The server and storage will be hosted at the SURFsara (NleSC partner) data center.
+The server and storage will be hosted at the SURFsara (NLeSC partner) data center.
 The total amount of data storage available is (currently) 100 TB.
 This includes the need for scratch space for individual users during analysis runs.
 
-The server is an Ubuntu virtual machine (VM); the details (memory, cores etc) are to be decided.
+The server is an Ubuntu virtual machine (VM); the details on the used resources (memory, cores etc) are yet to be decided.
 Users are allowed access to the notebooks, or to the machine directly using ssh.
 The former is preferred, since this makes consistency, sharing of code and provenance generally easier.
 
@@ -33,6 +33,8 @@ The home directories of the users will also be saved.
 These directories, however, should *not* be used or seen as a place for permanent storage: scripts and notebooks should be stored elsewhere, for example in (private) repositories.
 
 Some details about the system used can be found at https://doc.hpccloud.surfsara.nl[SURFsara HPC cloud documentation].
+
+An Ansible playbook is available in the link:ansible/ subdirectory of this repository for setting up the virtual machine.
 
 === Resource policies
 
@@ -74,7 +76,7 @@ The widespread use of the Jupyter notebook should help with its usage: many user
 
 === Lab environment
 
-The Jupyter notebook environment has been extended to include a shell environment with a command line and a text editor, and the option to start multiple sessions and kernels (e.g., Python 2, Python 3, R, Julia) all from the same session.
+Over the past years, the Jupyter notebook environment has been extended to include a shell environment with a command line and a text editor (still running in a web browser), and the option to start multiple sessions and kernels (e.g., Python 2, Python 3, R, Julia) all from the same session.
 This is now called http://jupyterlab.readthedocs.io/en/latest/[JupyterLab].
 
 Like the notebook, JupyterLab can be run locally (`python -m jupyter lab` from the command line), or, for the case here, remotely; in both cases, a web browser acts as the environment that the user will use.
@@ -101,6 +103,20 @@ This is *not* possible with purely the notebook: logging out (or simply closing 
 The stored data may be served using an OpenDaP server, or a THREDDS server.
 Some newly created datasets may be stored there as well, for re-use by other users.
 
+Data stored would be
+
+* Standard datasets
+** CMIP5 (total amount: 126 TB)
+** Euro-Cordex (total amount: 44 TB)
+** Other?
+* Derived data
+** Possible (re)shared within the project through the same server
+* Scratch data
+** Generic scratch area for users, with a fair-use policy.
+
+There is 100 TB available, so there will need to be prioritisation what sections of the data need to be available (e.g., specific time intervals and variables for CMIP5).
+There will also be a tradeoff between standard datasets, derived data (which is expected to grow during the project) and scratch data available.
+
 = Related projects
 
 - http://pangeo.pydata.org/hub/login[Pangeo data]
@@ -115,13 +131,13 @@ For more information, see http://pangeo.io.
 
 - https://www.wekeo.eu/[WEkEO]
 +
-Very broad audience, and many possibilities (including virtual machines and notebooks).
-Currently in testing mode, with possibility for free trial.
-Unclear which data is stored next to the analyses server or virtual machines.
+WEkEO appears to target a very broad audience, and many possibilities (including virtual machines and notebooks).
+It is currently in testing mode, with a possibility for free trial.
+It is unclear which data is stored directly next to the analyses server or virtual machines.
 
 - https://ecaslab.dkrz.de/home.html[ECASLab]
 +
-Looks to be very similar in purpose to this project: a notebook environment next to datasets
+Looks to be very similar in purpose to this project: a Jupyter notebook/lab environment next to datasets
 Uses Ophidia as a terminal interface, instead of the standard terminal.
 
 - https://cds.climate.copernicus.eu/#!/home[Copernicus Climate Data Store]
