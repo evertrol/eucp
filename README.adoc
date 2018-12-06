@@ -1,24 +1,68 @@
 = EUCP Notebook
 
-Last update: 28-09-2018
-
-A notebook system for climate research.
+A notebook and data sharing system for climate research.
 
 This document is work in progress.
 
+Last update: 5-12-2018
+
+
 == Goals
 
-This repository documents a notebook system for possible use within the European Climate Prediction (EUCP) project.
+This repository documents a notebook and data sharing system for use within the European Climate Prediction (EUCP) project.
+
 A notebook system allows scientists to use a uniform interface to perform their analysis on climate data sets.
-It can run on the same server where the data is stored (or very close to a data server), removing the need to download the required data sets locally.
+It should run on the same server where the data is stored, or very close to a data server, removing the need to download the required data sets locally.
+Data access should also be easy, and fast.
 The use of notebooks also allows easier sharing of analysis, for example with peers (direct collaborators, referees etc.) and a more general audience.
 In addition, the analysis steps are to be saved (including history versioning) for reproducibility.
+
+== Resources
+
+The server and storage will be hosted at the SURFsara (NleSC partner) data center.
+The total amount of data storage available is (currently) 100 TB.
+This includes the need for scratch space for individual users during analysis runs.
+
+The server is an Ubuntu virtual machine (VM); the details (memory, cores etc) are to be decided.
+Users are allowed access to the notebooks, or to the machine directly using ssh.
+The former is preferred, since this makes consistency, sharing of code and provenance generally easier.
+
+The storage itself uses CEPH datablocks.
+These will be made persistent, so that scratch space will persist between restarts of the VM.
+The home directories of the users will also be saved.
+These directories, however, should *not* be used or seen as a place for permanent storage: scripts and notebooks should be stored elsewhere, for example in (private) repositories.
+
+Some details about the system used can be found at https://doc.hpccloud.surfsara.nl[SURFsara HPC cloud documentation].
+
+=== Resource policies
+
+Separate storage diskspace is provided as scratch space for large datasets; each user has a subdirectory here they can use.
+A fair-share policy will initially be used: users can store any amount of data they like (within system limits), but are expected to clean up disk space in time, and not use all resources.
+A similar policy will be used for CPU resources, since it is expected that most users will only require computational resources a fraction of the time.
+Most time is likely devoted to working on the analyses notebooks and scripts; it is *not* expected that e.g. long-running simulations are run on the system.
+It is expected that some analyses runs will take several days and require multiple CPU cores, for example to iterate over all available models.
+This, however, is not expected to be the nominal mode of use initially.
+
+=== Possible scaling issues
+
+A VM in the cloud may not scale well: cores or memory are hard to adjust while the machine is running.
+It is possible to start a new VM if computation demand is high (automatically, through a scripting interface), but this is something that hasn't been explored yet.
+
+==== Kubernetes use
+
+A standard alternative, used by various cloud providers, is to run Kubernetes.
+Kubernetes scales well for additional compute resources (using so-called pods to run processes in), but it may not work well with large amount of data (50-100 TB) that needs to be readily available.
+It also makes it much harder to directly log in to a system (pod) through ssh.
+Lastly, it is unclear how easy it is to deploy Kubernetes on the cloud system at SURF-Sara; this is something to find out if VMs prove to not be workable.
+
+The convenient thing about working with Kubernetes is that there are already various deployments around that can be used right now: Pangeo-data is one of the better-known (see also the list at the end of this document).
+Note that Kubernetes appears to focus more on scaling computational-wise (allowing compute-intensive jobs to run in new pods created on the fly), but it is, again, unclear how it would deal with large amount of directly accessible data.
+
 
 
 == Implementation
 
 The notebook implementation used is the Jupyter notebook.
-This notebook system started originally as an extended Python interactive interpreter, and has evolved with a variety of extensions.
 One of the main uses of Jupyter is in data analysis, since it includes output, including visualisations, directly in the notebook.
 In addition, Python is widely used in the sciences for analysis, and nowadays a wide variety of packages (libraries) exist to help with that.
 
@@ -35,61 +79,51 @@ This is now called http://jupyterlab.readthedocs.io/en/latest/[JupyterLab].
 
 Like the notebook, JupyterLab can be run locally (`python -m jupyter lab` from the command line), or, for the case here, remotely; in both cases, a web browser acts as the environment that the user will use.
 
-=== Hub
+=== JupyterHub
 
 The JupyterHub is a system where multiple users can start a notebook (or lab) on the same server: each notebook is separate from the other notebooks.
 JupyterHub is the underlying system for remote use of Jupyter notebooks / labs.
 
+The hub has a login system, which in our case is directly connected to the underlying system logins and accounts.
+This allows for ssh access to exactly the same system as through JupyterHub.
+This match also allows for standard sharing of data between users (with group and world permissions).
 
-=== Binders
+==== Long-running jobs
 
-A recent development are notebook binders.
-These use (often very simple) repositories that lists required packages (how this is to be listed, depends on the language to be used in the notebook).
-The binder interface will accept a link to the repository, and create a notebook environment with those packages installed.
-This allows anyone to tweak their notebook to their needs.
-In addition, notebook files (`\*.ipynb`) can be saved in the same repository.
-This makes it straightforward for others to recreate the environment, **and** load the relevant notebook.
+Note that it is entirely possible to run long-running jobs from the JupyterLab environment, avoiding the need for ssh login.
+Provisions need to be taken that a (compute) job is detached (e.g. with `nohup`, `disown` commands) and output (`stdout`, `stderr`) is directed into files.
+With those provisions, a user can login, start a job with in the Lab terminal, log out, log in elsewhere and find the results.
+This is *not* possible with purely the notebook: logging out (or simply closing the browser tab) removes the connection between the server and the output (the notebook cell), and while a job will complete, it does not know where to send its output (since the notebook cell has gone).
 
-For generic use, one or a few notebook environments will be given as an option to select from, so that users do not need to create a repository first.
-In addition, notebooks also accept a `!pip install <package>` syntax (and similar for R and Julia), which escapes the notebook session (thanks to the `!`) and will install the relevant package.
-This last option is more a quick-fix solution on the user side; binders allow for full Conda environments to be installed.
 
-The main project for Jupyter notebooks binders is https://binderhub.readthedocs.io/en/latest/[BinderHub].
-As the name indicates, the actual underlying infrastructure is provided by JupyterHub; BinderHub adds the option of turning a repository into a Dockerfile that can be used to start a notebook environment.
-The latter is done through a utility called `repo2docker`, which is developed within the larger https://github.com/jupyterhub[JupyterHub project].
+=== Data server
 
-A demonstration page (that can actually be used already!) is at https://mybinder.org/.
+The stored data may be served using an OpenDaP server, or a THREDDS server.
+Some newly created datasets may be stored there as well, for re-use by other users.
 
-=== Example cases
+= Related projects
 
-Note: some of the mybinder examples may take some time to load.
-
-See also https://mybinder.readthedocs.io/en/latest/sample_repos.html
-
-- Julia and Python notebook: http://mybinder.org/v2/gh/binder-examples/julia_python/master
-+
-Once loaded, change this example to a JupyterLab environment by changing the `tree` bit at the end of the URL into `lab`.
-
-- R notebook: https://hub.mybinder.org/user/binder-examples-r-huwjm759/notebooks/index.ipynb
-
-- R studio environment: https://mybinder.org/v2/gh/ha0ye/RainCloudPlots/master?urlpath=rstudio
-
-- Pangeo data: http://pangeo.pydata.org/hub/login
+- http://pangeo.pydata.org/hub/login[Pangeo data]
 +
 Requires a GitHub account to sign in.
 Provides a JupyterLab environment for geoscience.
 It allows to run multi-core processes using `dask` and `xarray` on a cloud system: this will fire off separate "pods" for the computation.
 +
+This appears to be one of the few (only?) similar project that has its source code fully available, with an installation description.
++
 For more information, see http://pangeo.io.
 
-== More information
+- https://www.wekeo.eu/[WEkEO]
++
+Very broad audience, and many possibilities (including virtual machines and notebooks).
+Currently in testing mode, with possibility for free trial.
+Unclear which data is stored next to the analyses server or virtual machines.
 
-More information is detailed in the following documents:
+- https://ecaslab.dkrz.de/home.html[ECASLab]
++
+Looks to be very similar in purpose to this project: a notebook environment next to datasets
+Uses Ophidia as a terminal interface, instead of the standard terminal.
 
-- link:docs/architecture.adoc[architecture]: details on the architecture and infrastructure used by the BinderHub system
-
-- link:docs/configurations.adoc[configurations]: possible system configurations for a notebook system
-
-- link:docs/development.adoc[development]: idea on how the development of a notebook system will proceed
-
-- link:docs/pros-cons.adoc[procs-cons]: advantages and disadvantages of the notebook and BinderHub system.
+- https://cds.climate.copernicus.eu/#!/home[Copernicus Climate Data Store]
++
+Has its own version of a notebook, which appears less flexible and extendable compared to a standard JupyterHub + Lab environment.
