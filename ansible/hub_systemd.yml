@@ -12,7 +12,7 @@
           [Service]
           Environment="PATH=/usr/local/miniconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
           User=jupyterhub
-          ExecStart=/usr/local/miniconda/bin/jupyterhub
+          ExecStart=/usr/local/miniconda/bin/jupyterhub -f /etc/jupyterhub/jupyterhub_config.py
           WorkingDirectory=/etc/jupyterhub
 
           [Install]
