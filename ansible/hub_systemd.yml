@@ -14,6 +14,9 @@
           User=jupyterhub
           ExecStart=/usr/local/miniconda/bin/jupyterhub -f /etc/jupyterhub/jupyterhub_config.py
           WorkingDirectory=/etc/jupyterhub
+          # Requires a recent systemd version
+          #StandardOutput=file:/var/log/jupyterhub.log
+          #StandardError=file:/var/log/jupyterhub_err.log
 
           [Install]
           WantedBy=multi-user.target
