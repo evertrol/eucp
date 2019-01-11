@@ -1,13 +1,25 @@
 # Ansible playbook for EUCP notebook server
 
 This directory contains the Ansible playbook to set up a virtual
-machine (VM) with a JupyterHub, for use within the EUCP. The VM
-<should be a Ubuntu 18.04 (LTS) system. The current setup uses one
+machine (VM) with a JupyterHub, for use within the EUCP. The VM tested
+has been a Ubuntu 18.04 (LTS) system. The current setup uses one
 running in the SURF HPC cloud.
 
-The following steps are performed:
+Run as follows:
 
-* Installation of some some standard (Ubuntu) packages
+    ansible-playbook hpccloud-playbook.yml
+
+Note that the `ansible.cfg` template file in this repository directory
+points to the Ansible inventory, or specifically, the `hosts` file (a
+template file is given in this directory), which sets the host(s) to
+run the installation on. Update `hosts` as necessary for your
+situation; you can use host aliases defined in your $HOME/.ssh/config
+file.
+
+
+Running the playbook performs the following steps:
+
+* Installation of some standard (Ubuntu) packages
 * Creation and mounting of data storage virtual disks
 * Downloading and installation of MiniConda
 ** Installation of JupyterHub, JupyterLab and a few extensions (for
