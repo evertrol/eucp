@@ -1,4 +1,5 @@
 ---
+
 - hosts: all
   vars_files:
     - mount_vars.yml
@@ -24,3 +25,5 @@
     loop: "{{ users }}"
 
   - include: ssh_access.yml
+
+  - include: thredds.yml
