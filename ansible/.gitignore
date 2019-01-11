@@ -1,2 +1,4 @@
 mount_vars.yml
 user_vars.yml
+hosts
+ansible.cfg
