@@ -15,7 +15,7 @@
     - command: /usr/local/miniconda/bin/conda install --yes --quiet --channel conda-forge {{ item }}
       args:
         creates: /usr/local/miniconda/lib/python3.6/site-packages/{{ item }}/
-      loop: [jupyterhub, notebook, jupyterlab, sudospawner, ipywidgets]
+      loop: [jupyterhub, notebook, jupyterlab, sudospawner, ipywidgets, iris, ipyleaflet, xarray, pyproj]
 
     - command: /usr/local/miniconda/bin/jupyter labextension install @{{ item.scope }}/{{ item.ext }}
       args:
@@ -23,3 +23,11 @@
       loop:
         - { scope: jupyterlab, ext: hub-extension }
         - { scope: jupyter-widgets, ext: jupyterlab-manager }
+        - { scope: ewatercycle, ext: jupyterlab_thredds }
+    - command: /usr/local/miniconda/bin/jupyter labextension install jupyter-leaflet
+      args:
+        creates: /usr/local/miniconda/share/jupyter/lab/extensions/jupyter-leaflet-*.tgz
+
+    - command: /usr/local/miniconda/bin/python3.6 -m pip install git+https://github.com/eWaterCycle/jupyterlab_thredds.git
+      args:
+        creates: /usr/local/miniconda/lib/python3.6/jupyterlab_thredds
