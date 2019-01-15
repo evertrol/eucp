@@ -8,6 +8,12 @@
   become: true
 
   tasks:
+  # Stop-gap solution for the issue that Ubuntu automatically upgrades
+  # packages upon first login, thus preventing running this playbook
+  # on a completely new VM.
+  - name: Wait for automatic system updates
+    shell: while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done;
+
   - name: Update apt and install packages
     apt:
       update_cache: yes
