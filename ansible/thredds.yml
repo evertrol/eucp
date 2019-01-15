@@ -1,6 +1,9 @@
+# Note that we require Java 8: the GeoTools Java library is
+# incompatible with Java 9+. See e.g. the related item at
+# https://stackoverflow.com/questions/47888812
 - name: Install tomcat
   apt:
-    name: [tomcat8]
+    name: [tomcat8, openjdk-8-jre]
 
 # Stop tomcat8 service before making changes
 - name: Stop tomcat service
@@ -24,6 +27,9 @@
     mode: 0755
     content: |
       #! /bin/sh
+      # We need to set JAVA_HOME, to override the default Java version
+      export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
+
       CONTENT_ROOT=-Dtds.content.root.path=$CATALINA_BASE/content/
       # set java prefs related variables (used by the wms service, for example)
       JAVA_PREFS_ROOTS="-Djava.util.prefs.systemRoot=$CATALINA_BASE/content/thredds/javaUtilPrefs \
