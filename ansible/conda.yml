@@ -1,3 +1,6 @@
+# We use Conda instead of
+# - OS packages: not all packages are available, and some may be very outdated
+# - pip packages: this may cause problems with library dependencies, e.g. for a package like iris
 - name: Install Conda, JupyterHub & related packages
   block:
     # Note: there is an Ansible Conda module, but it's not core
@@ -15,7 +18,26 @@
     - command: /usr/local/miniconda/bin/conda install --yes --quiet --channel conda-forge {{ item }}
       args:
         creates: /usr/local/miniconda/lib/python3.6/site-packages/{{ item }}/
-      loop: [jupyterhub, notebook, jupyterlab, sudospawner, ipywidgets, iris, ipyleaflet, xarray, pyproj]
+      # TODO: fix version numbers for each package once we have a full and compatible installation
+      # This may speed up conda trying to match dependencies
+      loop:
+        - jupyterhub
+        - notebook
+        - jupyterlab
+        - sudospawner
+        - ipywidgets
+        - iris
+        - ipyleaflet
+        - dask
+        - xarray
+        - pyproj
+        - numpy
+        - scipy
+        - matplotlib
+        - seaborn
+        - netcdf4
+        - pandas
+        - scikit-learn
 
     - command: /usr/local/miniconda/bin/jupyter labextension install @{{ item.scope }}/{{ item.ext }}
       args:
