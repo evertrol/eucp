@@ -29,6 +29,15 @@
         - "c.JupyterHub.bind_url = 'http://server.eucp-nlesc.surf-hosted.nl:8081'"
         - "c.Spawner.default_url = '/lab'"
         - "c.JupyterHub.spawner_class = 'sudospawner.SudoSpawner'"
+        - "c.Spawner.cmd = ['jupyter-labhub']"
         - "#c.Application.log_level = 'DEBUG'"
         - "#c.Spawner.debug = True"
         - "#c.SudoSpawner.debug = True"
+
+    - copy:
+        dest: /usr/local/miniconda/bin/sudospawner-singleuser
+        mode: 0755
+        content: |
+          #!/bin/bash -l
+          # Delegate the notebook server launch to the jupyter-labhub script.
+          exec "jupyter-labhub" $@
