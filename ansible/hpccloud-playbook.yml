@@ -20,6 +20,8 @@
       name: [emacs, zsh, curl, wget, screen, tmux, ufw, whois, git, build-essential]
       autoremove: yes
 
+  - include: fortran.yml
+
   - include: mount_storage.yml
     loop: "{{ mounts }}"
 
