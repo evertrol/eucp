@@ -38,6 +38,9 @@
         - netcdf4
         - pandas
         - scikit-learn
+        - r
+        - julia
+        - r-irkernel
 
     - command: /mnt/opt/conda/bin/jupyter labextension install @{{ item.scope }}/{{ item.ext }}
       args:
