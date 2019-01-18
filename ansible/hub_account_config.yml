@@ -18,7 +18,7 @@
         owner: jupyterhub
         group: jupyterhub
       loop: [/srv/jupyterhub, /etc/jupyterhub]
-    - command: /usr/local/miniconda/bin/jupyterhub --generate-config -f /etc/jupyterhub/jupyterhub_config.py && chown jupyterhub:jupyterhub /etc/jupyterhub/jupyterhub_config.py
+    - command: /mnt/opt/conda/bin/jupyterhub --generate-config -f /etc/jupyterhub/jupyterhub_config.py && chown jupyterhub:jupyterhub /etc/jupyterhub/jupyterhub_config.py
       args:
         creates: /etc/jupyterhub/jupyterhub_config.py
     - lineinfile:
@@ -35,7 +35,7 @@
         - "#c.SudoSpawner.debug = True"
 
     - copy:
-        dest: /usr/local/miniconda/bin/sudospawner-singleuser
+        dest: /mnt/opt/conda/bin/sudospawner-singleuser
         mode: 0755
         content: |
           #!/bin/bash -l

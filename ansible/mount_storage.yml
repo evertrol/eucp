@@ -24,3 +24,8 @@
     - lineinfile:
         path: /etc/rc.d/rc.local
         line: "echo 4096 > /sys/block/{{ item.dev }}/queue/read_ahead_kb"
+
+- name: Create mount point for Conda
+  file:
+    path: /mnt/opt
+    state: directory
