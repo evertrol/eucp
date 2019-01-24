@@ -30,5 +30,6 @@
 # Add a group and user later on, with fixed group id and user id:
 # groupadd -g 1005 <groupname>
 # pw=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9@#$%*_\-' | fold -w 12 | head -n1)
+# Or use: pw=$(openssl rand -base64 12)
 # cryptopass=$(mkpasswd --method=sha-512 $pw)
 # useradd -u 1004 -g <groupname> -G jupyterhub,users -m -p $cryptopass -s /bin/bash <username>
