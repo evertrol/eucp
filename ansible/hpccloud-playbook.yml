@@ -28,6 +28,10 @@
 
   - include: firewall.yml
 
+# Only include when requiring a new license
+# Usually, one should copy the current one from a backup when re-installing the VM
+  - include: letsencrypt.yml
+
   - include: jupyterhub.yml
 
   - include: nginx.yml

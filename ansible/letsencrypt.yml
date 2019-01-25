@@ -1,0 +1,35 @@
+- name: Test for existing certificate tar file
+  local_action: stat path={{ servername }}-certs.tar
+  become: false
+  register: certtarfile
+
+- name: Test for existing certificate on server
+  stat:
+    path: /etc/letsencrypt/archive/{{ servername }}/privkey1.pem
+  register: certfile
+
+- name: Set up Letsencrypt license
+  block:
+    - apt:
+        name: [letsencrypt]
+    - shell:
+        certbot certonly --standalone -d server.eucp-nlesc.surf-hosted.nl
+    # JupyterHub needs to be able to read the certificate
+    # Ensure the base directory is readable by all, and
+    # let the JupyterHub account own the relevant subdirectory
+    - file:
+        path:  /etc/letsencrypt/archive
+        mode: 0755
+    - file:
+        path: /etc/letsencrypt/archive/{{ servername }}
+        owner: jupyterhub
+        group: jupyterhub
+  when: not (certtarfile.stat.exists or certfile.stat.exists)
+
+- name: Copy and untar existing certificates
+  unarchive:
+    src: "{{ servername }}-certs.tar"
+    dest: /etc/letsencrypt/archive/{{ servername }}/
+    group: root
+    owner: root
+  when: certtarfile.stat.exists and not certfile.stat.exists
