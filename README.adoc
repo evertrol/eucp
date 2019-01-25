@@ -143,3 +143,19 @@ Uses Ophidia as a terminal interface, instead of the standard terminal.
 - https://cds.climate.copernicus.eu/#!/home[Copernicus Climate Data Store]
 +
 Has its own version of a notebook, which appears less flexible and extendable compared to a standard JupyterHub + Lab environment.
+
+= Copyright
+
+This project is copyright 2019 Netherlands eScience Center
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
