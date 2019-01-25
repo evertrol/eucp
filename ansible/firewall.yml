@@ -1,7 +1,11 @@
+# Pinch a few holes in the firewall
 - name: Set up the firewall
   block:
     - ufw:
         state: enabled
     - ufw:
         rule: allow
-        to_port: 8081
+        to_port: 443
+    - ufw:
+        rule: allow
+        to_port: 80

@@ -1,0 +1,22 @@
+# Following https://jupyterhub.readthedocs.io/en/stable/reference/config-proxy.html
+# Have a Letsencrypt certificate installed first; see letsencrypt.yml
+
+- name: Install nginx
+  apt:
+    name: [nginx]
+
+- name: Generate Diffie Hellman parameters; takes a few minutes
+  shell: openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096
+  args:
+    creates: /etc/ssl/certs/dhparam.pem
+
+- name: Create JupyterHub nginx configuration file
+  template:
+    src: jupyterhub-nginx.conf
+    dest: /etc/nginx/sites-available/jupyterhub.conf
+    mode: 0644
+
+- name: Symlink JupyterHub nginx configuration file to active sites
+  file:
+    src: /etc/nginx/sites-available/jupyterhub.conf
+    dest: /etc/nginx/sites-enabled/jupyterhub.conf

@@ -4,6 +4,4 @@
 
 - include: sudoers.yml
 
-- include: firewall.yml
-
 - include: hub_systemd.yml

@@ -2,6 +2,7 @@
 
 - hosts: all
   vars_files:
+    - server_var.yml
     - mount_vars.yml
     - user_vars.yml
   remote_user: ubuntu
@@ -25,7 +26,11 @@
   - include: mount_storage.yml
     loop: "{{ mounts }}"
 
+  - include: firewall.yml
+
   - include: jupyterhub.yml
+
+  - include: nginx.yml
 
   - include: setup_umask.yml
 
@@ -35,3 +40,13 @@
   - include: ssh_access.yml
 
   - include: thredds.yml
+
+
+  - name: Restart nginx and JupyterHub services
+    block:
+      - systemd:
+          name: nginx
+          state: restarted
+      - systemd:
+          name: jupyterhub
+          state: restarted
