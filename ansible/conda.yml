@@ -27,6 +27,7 @@
         - sudospawner
         - ipywidgets
         - iris
+        - iris-sample-data
         - ipyleaflet
         - dask
         - xarray
