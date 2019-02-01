@@ -14,22 +14,38 @@
         name: [letsencrypt]
     - shell:
         certbot certonly --standalone -d server.eucp-nlesc.surf-hosted.nl
-    # JupyterHub needs to be able to read the certificate
+    # When JupyterHub is run standalone (without Nginx),
+    # the jupyterhub accounts needs to be able to read the certificate
     # Ensure the base directory is readable by all, and
     # let the JupyterHub account own the relevant subdirectory
-    - file:
-        path:  /etc/letsencrypt/archive
-        mode: 0755
-    - file:
-        path: /etc/letsencrypt/archive/{{ servername }}
-        owner: jupyterhub
-        group: jupyterhub
+    # For use with Nginx, root permissions are fine.
+    #- file:
+    #    path:  /etc/letsencrypt/archive
+    #    mode: 0755
+    #- file:
+    #    path: /etc/letsencrypt/archive/{{ servername }}
+    #    owner: jupyterhub
+    #    group: jupyterhub
   when: not (certtarfile.stat.exists or certfile.stat.exists)
 
 - name: Copy and untar existing certificates
-  unarchive:
-    src: "{{ servername }}-certs.tar"
-    dest: /etc/letsencrypt/archive/{{ servername }}/
-    group: root
-    owner: root
+  block:
+    - file:
+        path: /etc/letsencrypt/archive/{{ servername }}/
+        state: directory
+    - unarchive:
+        src: "{{ servername }}-certs.tar"
+        dest: /etc/letsencrypt/archive/{{ servername }}/
+        group: root
+        owner: root
   when: certtarfile.stat.exists and not certfile.stat.exists
+
+- name: Create link for live directory with certificates
+  block:
+    - file:
+        path: /etc/letsencrypt/live
+        state: directory
+    - file:
+        src: /etc/letsencrypt/archive/{{ servername }}
+        dest: /etc/letsencrypt/live/{{ servername }}
+        state: link
