@@ -18,7 +18,7 @@
         owner: jupyterhub
         group: jupyterhub
       loop: [/srv/jupyterhub, /etc/jupyterhub]
-    - command: /mnt/opt/conda/bin/jupyterhub --generate-config -f /etc/jupyterhub/jupyterhub_config.py && chown jupyterhub:jupyterhub /etc/jupyterhub/jupyterhub_config.py
+    - command: /opt/conda/bin/jupyterhub --generate-config -f /etc/jupyterhub/jupyterhub_config.py && chown jupyterhub:jupyterhub /etc/jupyterhub/jupyterhub_config.py
       args:
         creates: /etc/jupyterhub/jupyterhub_config.py
     - lineinfile:
@@ -39,7 +39,7 @@
         - "#c.JupyterHub.ssl_cert = '/etc/letsencrypt/live/server.eucp-nlesc.surf-hosted.nl/fullchain.pem'"
 
     - copy:
-        dest: /mnt/opt/conda/bin/sudospawner-singleuser
+        dest: /opt/conda/bin/sudospawner-singleuser
         mode: 0755
         content: |
           #!/bin/bash -l

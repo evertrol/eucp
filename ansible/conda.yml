@@ -8,16 +8,20 @@
     - get_url:
         url: https://repo.continuum.io/miniconda/Miniconda3-3.7.0-Linux-x86_64.sh
         dest: /tmp
-    - command: bash /tmp/Miniconda3-3.7.0-Linux-x86_64.sh -b -p /mnt/opt/conda
+    - command: bash /tmp/Miniconda3-3.7.0-Linux-x86_64.sh -b -p /mnt/data/data1/conda
       args:
-        creates: /mnt/opt/conda
-    - command: /mnt/opt/conda/bin/conda update --yes --quiet conda
-    - command: /mnt/opt/conda/bin/conda install --yes --quiet --channel conda-forge python=3.6
+        creates: /mnt/data/data1/conda
+    - file:
+        src: /mnt/data/data1/conda
+        path: /opt/conda
+        state: link
+    - command: /opt/conda/bin/conda update --yes --quiet conda
+    - command: /opt/conda/bin/conda install --yes --quiet --channel conda-forge python=3.6
       args:
-        creates: /mnt/opt/conda/lib/python3.6/
-    - command: /mnt/opt/conda/bin/conda install --yes --quiet --channel conda-forge {{ item }}
+        creates: /opt/conda/lib/python3.6/
+    - command: /opt/conda/bin/conda install --yes --quiet --channel conda-forge {{ item }}
       args:
-        creates: /mnt/opt/conda/pkgs/{{ item }}-*bz2
+        creates: /opt/conda/pkgs/{{ item }}-*bz2
       # TODO: fix version numbers for each package once we have a full and compatible installation
       # This may speed up conda trying to match dependencies
       loop:
@@ -43,17 +47,22 @@
         - julia
         - r-irkernel
 
-    - command: /mnt/opt/conda/bin/jupyter labextension install @{{ item.scope }}/{{ item.ext }}
+    - command: /opt/conda/bin/jupyter labextension install @{{ item.scope }}/{{ item.ext }}
       args:
-        creates: /mnt/opt/conda/share/jupyter/lab/extensions/{{ item.scope }}-{{ item.ext }}-*.tgz
+        creates: /opt/conda/share/jupyter/lab/extensions/{{ item.scope }}-{{ item.ext }}-*.tgz
       loop:
         - { scope: jupyterlab, ext: hub-extension }
         - { scope: jupyter-widgets, ext: jupyterlab-manager }
         - { scope: ewatercycle, ext: jupyterlab_thredds }
-    - command: /mnt/opt/conda/bin/jupyter labextension install jupyter-leaflet
+    - command: /opt/conda/bin/jupyter labextension install jupyter-leaflet
       args:
-        creates: /mnt/opt/conda/share/jupyter/lab/extensions/jupyter-leaflet-*.tgz
+        creates: /opt/conda/share/jupyter/lab/extensions/jupyter-leaflet-*.tgz
 
-    - command: /mnt/opt/conda/bin/python3.6 -m pip install git+https://github.com/eWaterCycle/jupyterlab_thredds.git
+    - command: /opt/conda/bin/python3.6 -m pip install git+https://github.com/eWaterCycle/jupyterlab_thredds.git
       args:
-        creates: /mnt/opt/conda/lib/python3.6/jupyterlab_thredds
+        creates: /opt/conda/lib/python3.6/jupyterlab_thredds
+
+    - file:
+        path: /mnt/data/data1/conda
+        mode: u=rwX,g=rX,o=rX
+        recurse: yes
