@@ -20,3 +20,4 @@
   file:
     src: /etc/nginx/sites-available/jupyterhub.conf
     dest: /etc/nginx/sites-enabled/jupyterhub.conf
+    state: link
