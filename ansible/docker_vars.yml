@@ -1,0 +1,2 @@
+#docker_image: jupyter/datascience-notebook:45b8529a6bfc
+docker_image: evertrol/eucp-notebook:64de3f568873

@@ -5,6 +5,7 @@
     - server_var.yml
     - mount_vars.yml
     - user_vars.yml
+    - docker_vars.yml
   remote_user: ubuntu
   become: true
 
@@ -31,6 +32,8 @@
 # Only include when requiring a new license
 # Usually, one should copy the current one from a backup when re-installing the VM
   - include: letsencrypt.yml
+
+  - include: docker.yml
 
   - include: jupyterhub.yml
 
