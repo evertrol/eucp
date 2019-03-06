@@ -8,13 +8,16 @@
     - get_url:
         url: https://repo.continuum.io/miniconda/Miniconda3-3.7.0-Linux-x86_64.sh
         dest: /tmp
-    - command: bash /tmp/Miniconda3-3.7.0-Linux-x86_64.sh -b -p /mnt/data/data1/conda
+    - command: bash /tmp/Miniconda3-3.7.0-Linux-x86_64.sh -b -p /opt/conda
       args:
-        creates: /mnt/data/data1/conda
-    - file:
-        src: /mnt/data/data1/conda
-        path: /opt/conda
-        state: link
+        creates: /opt/conda
+#    - command: bash /tmp/Miniconda3-3.7.0-Linux-x86_64.sh -b -p /mnt/data/data1/conda
+#      args:
+#        creates: /mnt/data/data1/conda
+#    - file:
+#        src: /mnt/data/data1/conda
+#        path: /opt/conda
+#        state: link
     - command: /opt/conda/bin/conda update --yes --quiet conda
     - command: /opt/conda/bin/conda install --yes --quiet --channel conda-forge python=3.6
       args:
@@ -24,6 +27,7 @@
         creates: /opt/conda/pkgs/{{ item }}-*bz2
       # TODO: fix version numbers for each package once we have a full and compatible installation
       # This may speed up conda trying to match dependencies
+      # TODO2: install all packages at once; this may speed up resolving dependencies
       loop:
         - jupyterhub
         - notebook
@@ -44,9 +48,6 @@
         - netcdf4
         - pandas
         - scikit-learn
-        - r
-        - julia
-        - r-irkernel
 
     - command: /opt/conda/bin/jupyter labextension install @{{ item.scope }}/{{ item.ext }}
       args:
@@ -64,6 +65,6 @@
         creates: /opt/conda/lib/python3.6/jupyterlab_thredds
 
     - file:
-        path: /mnt/data/data1/conda
+        path: /opt/conda
         mode: u=rwX,g=rX,o=rX
         recurse: yes
