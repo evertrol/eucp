@@ -1,3 +1,8 @@
+- name: Test for existence of /mnt/data/users
+  stat:
+    path: /mnt/data/users
+  register: usersdir
+
 - name: Add user with random password
   block:
   - shell: cat /dev/urandom | tr -dc 'a-zA-Z0-9@#$%*_\-' | fold -w 12 | head -n1
@@ -13,18 +18,13 @@
       groups: [jupyterhub, users]
       password: "{{ cryptopass.stdout }}"
       shell: /bin/bash
+      home: "/mnt/data/users/{{ item.user }}"
   - file:
       path: "/mnt/data/users/{{ item.user }}"
-      state: directory
-      owner: "{{ item.user }}"
-      group: "{{ item.group }}"
-      mode: 0750
-  - file:
-      path: "/home/{{ item.user }}"
       mode: 0750
   - debug:
       msg: "{{ item.user }}  {{ item.group }}  {{ randompass.stdout }}"
-
+  when: usersdir.stat.exists
 
 
 # Add a group and user later on, with fixed group id and user id:
