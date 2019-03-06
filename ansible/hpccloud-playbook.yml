@@ -45,6 +45,7 @@
 
   - include: thredds.yml
 
+  - include: vsftpd.yml
 
   - name: Restart nginx and JupyterHub services
     block:
