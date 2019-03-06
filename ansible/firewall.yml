@@ -9,3 +9,7 @@
     - ufw:
         rule: allow
         to_port: 80
+    # Docker - Hub connection
+    - ufw:
+        rule: allow
+        to_port: 8081
