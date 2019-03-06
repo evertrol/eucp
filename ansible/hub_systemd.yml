@@ -11,6 +11,7 @@
 
           [Service]
           Environment="PATH=/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          Environment="PYTHONPATH=/etc/jupyterhub"
           User=jupyterhub
           ExecStart=/opt/conda/bin/jupyterhub -f /etc/jupyterhub/jupyterhub_config.py
           WorkingDirectory=/etc/jupyterhub

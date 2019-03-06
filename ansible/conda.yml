@@ -29,6 +29,7 @@
         - notebook
         - jupyterlab
         - sudospawner
+        - dockerspawner
         - ipywidgets
         - iris
         - iris-sample-data
