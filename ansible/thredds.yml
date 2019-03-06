@@ -87,7 +87,7 @@
           <service name="odap" serviceType="OpenDAP" base="/thredds/dodsC/" />
           <service name="dap4" serviceType="DAP4" base="/thredds/dap4/" />
         </service>
-        <datasetScan name="CMIP5 Data" path="cmip5" location="/mnt/data/data1/cmip5/" >
+        <datasetScan name="CMIP5 Data" path="cmip5" location="/mnt/data/data1/thredds/cmip5/" >
           <serviceName>all</serviceName>
           <filter>
             <include wildcard="*.nc"/>
