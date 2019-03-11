@@ -9,8 +9,10 @@ c.Spawner.default_url = '/lab'
 c.JupyterHub.spawner_class = 'systemgroupspawner.SystemGroupSpawner'
 # Note: SystemGroupSpawner inherits from SystemUserSpawner, which in its turn
 # inherits from DockerSpawner
-c.SystemUserSpawner.environment = {'JUPYTER_ENABLE_LAB': '1', 'GRANT_SUDO': '1'}
+c.SystemUserSpawner.environment = {'JUPYTER_ENABLE_LAB': '1', 'GRANT_SUDO': '1', 'NB_UMASK': '0027'}
 c.SystemUserSpawner.host_homedir_format_string = '/mnt/data/users/{username}'
+c.DockerSpawner.volumes = {'/mnt/data/users': {'bind': '/home/{username}/_users', 'mode': 'ro'},
+                           '/mnt/data/data1/thredds': {'bind': '/home/{username}/_data', 'mode': 'ro'}}
 c.DockerSpawner.image = '{{ docker_image }}'
 
 # Turn off; minimize non-essential warnings & errors in the logs
