@@ -1,0 +1,11 @@
+These pages provide some introduction and practical information on JupyterHub and notebook usage, to make it easier for new users to get started.
+
+Contents are:
+
+* link:introduction.adoc[Introduction]
+
+* link:howto.adoc[How-tos and whys]
+
+* link:style.adoc[Notebook style guide]
+
+* link:shortcuts.adoc[Convenient JupyterLab (keyboard) shortcuts]

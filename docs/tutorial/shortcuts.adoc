@@ -1,0 +1,28 @@
+= Jupyter Lab keyboard shortcuts
+
+There are a number of keyboard shortcuts which can make life easier, instead of having to hunt down the correct menu item.
+Note that you have to be in command mode for most of these to work; hit escape to ensure you're in command mode.
+
+* Shift-enter (also works in editing mode)
+Execute the current cell, and move to the next cell
+
+* s (control-s or command-s (MacOS) in editing mode)
+Save the notebook
+
+* i i (twice i key)
+Interrupt the kernel; aborts notebook execution
+
+* select a block, then
+** control-] to indent the block (command-] on MacOS)
+** control-[ to dedent the block (command-[ on MacOS)
+
+* z
+Reverse operation on cells (notebook level)
+
+* control/command-z
+Reverse actions inside current cell
+
+* select cells
+In edit mode, shift-click or shift-up/down arrow to select a range of cells (surrounding blue outline).
+Note that the brighter blue vertical line on the left indicates the current active (selected) cell.
+Once selected, you can copy (C), cut (X) or paste below the current selection (V) the selected cells.

@@ -1,0 +1,151 @@
+= How to's, why's and general tips
+
+How do I run Python 2?::
++
+Python 2 is not supported by the standard datascience notebook anymore, and we have followed suit.
+Python 2 will be abandoned bye 1 January 2020, and lots of packages have already abandoned it in their newer versions.
+Therefore, Python code should be Python 3 by default now.
++
+Of course, not having a Python 2 kernel available, makes it harder to transition your old code from Python 2 to Python 3.
+In that case, contact the maintainers of this EUCP service, and we'll try and help you transition your code.
+
+
+How do I make sure my notebook is executable by others?::
++
+Usually, problems arise because notebook cells have been executed out of order, or multiple times (notebooks are not idempotent).
+When you have done this, and then send the notebook to another person, they can't replicate your results.
++
+To make sure your notebook can be run top-down with proper results, you should opt to `Restart Kernel...` (right-click on a cell, or from the "Kernel" item in the menu, or use the keyboard shortcut "0, 0" (two zeroes)).
+The pop-up warns you that "all variables will be lost", which is generally what you want: all variables will be reset/
++
+Even easier may be the bottom option from the "Run" item in the menu: "Restart Kernel and Run All Cells".
++
+Finally, there is the https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-reset[magic command `%reset`] to clear all variables (when used without a variable name), and `%reset -f` to do so without confirmation. Putting this magic command at the top of the first notebook cell could be good practice (or perhaps even in a cell on its own, that is only run when you run all cells in order).
++
+Note that the `%reset` command does not reset or reload your imports.
+If you are developing a module or package that is imported into your notebook, you may want to restart the full kernel for changes to take effect.
+But see also the next how-to.
+
+
+How do I automatically re-import a module?::
++
+If you are developing a module or package and you import it into your notebook, changes in the module or package are not automatically effective: the module is not automatically re-imported.
+You could restart the kernel (which will lose all variable values as well), but that is perhaps not ideal.
+The `autoreload` extension can take care of this.
++
+First, load the extension: `%load_ext autoreload`.
+Then, use the `%autoreload` with an appropriate setting: `%autoreload 2`.
++
+Keep in mind that autoreload is not guaranteed to work.
+For details, see the https://ipython.readthedocs.io/en/stable/config/extensions/autoreload.html[autoreload] documentation.
+
+
+I get a "Please use a different workspace" pop-up::
++
+This happens when you have a Jupyter Lab session already open in another tab (in the same browser).
+You should either switch to that other tab, close that other tab, use a different browser, or enter a unique identifier if you really want a new workspace.
+
+
+How do I change my password?::
++
+For now, you'll have to use ssh and access the virtual machine running the JupyterHub.
+JupyterHub itself does not manage accounts and passwords; it checks with other services whether a login is valid
++
+ssh to the machine with your current login name:
++
+[source]
+----
+ssh <username>@server.eucp-nlesc.surf-hosted.nl
+<username>@server.eucp-nlesc.surf-hosted.nl's password:
+----
++
+Then, on the command line, run the `passwd` command:
++
+[source]
+----
+Changing password for evert.
+(current) UNIX password:
+Enter new UNIX password:
+Retype new UNIX password:
+passwd: password updated successfully
+----
++
+Logout with control-d, or type `exit`.
+
+
+What is the ssh access useful for::
++
+Other than changing one's password, ssh may be useful when one has to upload a set of files: using `rsync` or `scp` may be easier than tarring the files, uploading them into the notebook, then untarring them in the notebook terminal.
+Other than that, there are likely few other uses for ssh.
+Perhaps if you prefer using tmux or GNU screen (instead of redirecting output to a file for long running processes), you may prefer ssh access (both tmux and screen are installed); but the amount of software that can be used is limited via ssh.
+
+There are packages and software missing when I use ssh::
++
+This is on purpose.
+While we would like to have every type of workflow available, resources are limited.
+We have therefore chosen to use a standard Docker container (the datascience notebook) with some additional packages.
+The container is used when logging in through the Hub.
+We don't install a copy of all the container software also on the underlying virtual machine: the latter is mainly used for running the services, not for directly running analyses on it.
++
+If you have specific requests, we may be able to accomodate them; please let us know.
+
+What is "restart my server"?::
++
+This open can be reached from the Hub menu - control panel.
+Every user will, upon first login, obtain a separate process, the Jupyter server.
+This runs the lab and kernels.
+If you restart the server, it will restart this process, which is sometimes necessary if the process seems to be stuck.
+It does not, however, reset your complete session: both your login and the open notebooks are all saved.
+So it is similar to turning a computer off and on again, but you don't have to log in again.
+
+
+
+How do I run long-running processes?::
++
+There are two answers to that, depending on whether you run a notebook cell that takes hours to days, or a standalone script.
+Most notable, though, is that the process will be keep running as long as you don't stop the kernel, and as long as you don't stop or restart your (Jupyter) server.
+You can log out or close the browser, and once you log back in, you'll find the process still going (or completed properly); it will not be aborted when you log out or close the browser (tab).
++
+Notebook cell:::
++
+An output from the notebook cell will be gone if you close the browser tab or log out.
+That is both the output from a statement on the last line of a cell (such as a single variable), or print functions.
+Therefore, *always* assign (important) output to a variable.
+You can then retrieve the output once the cell is finished, through that variable.
++
+Sometimes, a cell appears to be still running (indicating by the `[*]` in front of the cell), while it should have finished.
+Create a new cell below it, print or list the variables of interest from the previous cell, and execute the new cell (or simply execute the next cell).
+If the running cell was indeed finished, the new cell should execute properly, and you'll find your output there.
++
+Standalone script:::
++
+Similar to a notebook cell, the best is to capture all important data into (a) variable(s); the extra operation is then to save those variables to disk (ASCII, HDF5, netCDF, whatever format).
++
+If you have plain (print) output, or except error message, you can simply redirect those:
++
+[source]
+----
+./myscript.py > output.txt 2> errors.txt
+----
++
+or if you don't mind everything going into one file:
++
+[source]
+----
+./myscript.py > output.txt 2>&1
+----
+(This redirects the errors from `stderr` to whereever the normal output, `stdout` is going, which happens to be going into the file `output.txt`.)
++
+You will want put the script in the background, and *disconnect it from the terminal*:
+Use control-z to background the script, type `bg` to put it in the background, then type `jobs` to see it is running in the background, take note of the number (which is *not* the PID), and disconnect it from the terminal: `disown %1` (or `disown %2` if it is the second processes, etc).
+You can of course immediately background the process with the `&`, in which case a full example looks something like:
++
+[source]
+----
+$ sleep 120 > output.log 2>&1 &
+$ jobs
+[1]  + running    sleep 120
+$ disown %1
+$ jobs
+<no output>
+----
