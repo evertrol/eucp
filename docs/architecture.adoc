@@ -1,44 +1,76 @@
 = Architecture
 
-== Kubernetes
 
-The underlying infrastructure used is Kubernetes.
-This is a system that manages containerized applications, often on multiple hosts in the cloud.
-In the case of Jupyter ad BinderHub, every user will start a new notebook in its own container, or pods as they are called in Kubernetes' terms.
-Kubernetes will take care of the resources allocated to that pod (maximum memory, disk and CPU usage, for example).
-It will also create (deploy) and remove pods as necessary.
+The notebook implementation used is the Jupyter notebook.
+The notebooks are run inside a JupyterHub, and are by default set to a Jupyter Lab environment.
+The notebooks are contained within a Docker container based on https://jupyter-docker-stacks.readthedocs.io/en/latest/[the Jupyter datascience notebook], that connects to the underlying system through the Jupyter SystemUserSpawner.
+This allows for persisent users, whilst giving users the option to modify their container during their session, for example, to install additional package (sudo access in the container is possible).
+It is also possible to access the virtual machine directly using ssh, but using notebooks is preferred, since this makes consistency, sharing of code and provenance generally easier.
 
-== Docker
+One of the main uses of Jupyter is in data analysis, since it includes output, including visualisations, directly in the notebook.
+In addition, Python is widely used in the sciences for analysis, and nowadays a wide variety of packages (libraries) exist to help with that.
 
-Kubernetes itself relies on Docker for creating the containers.
-This is why it is somewhat straightforward to create a specific notebook Binder: starting from a base Docker file, it will create a new container with relevant packages and libraries, then start that container (in isolation of other notebook containers) to be used.
-The new containers will be hosted in a private registry.
-BinderHub has options for hosting containers at https://gcr.io (Google Cloud Container Registry) or at https://hub.docker.com, Docker Hub.
+Note that, while the Jupyter notebook comes from the Python world and is largely programmed in Python (with JavaScript at the user interface side), it allows a variety of "kernels" to run in the notebooks.
+This includes kernels for R and Julia.
+In all cases, the notebook simply functions as an mediator, passing input from the user to the relevant interpreter or compiler behind the scenes, and output from the interpreter or compiler back to the user.
 
-Note that a Kubernetes pod can actually contain multiple Docker containers.
-In most situations for BinderHub, a single pod runs a single container, but the Nginx and http-proxy-public containers share a pod.
+The widespread use of the Jupyter notebook should help with its usage: many users may not have to learn a new interface, or they may easily find help (either from (local) colleagues or on the internet) with its use.
 
-Some practical base Docker files are listed at https://github.com/jupyter/docker-stacks, which includes a standard "data science notebook".
+=== Lab environment
 
-== BinderHub architecture
+Over the past years, the Jupyter notebook environment has been extended to include a shell environment with a command line and a text editor (still running in a web browser), and the option to start multiple sessions and kernels (e.g., Python 2, Python 3, R, Julia) all from the same session.
+This is now called http://jupyterlab.readthedocs.io/en/latest/[JupyterLab].
 
-The BinderHub system requires several containers to be run (whether on a single machine or a cluster does not really matter), which will all communicate with each other using the HTTP protocol.
-Installation of this is detailed on the https://zero-to-jupyterhub.readthedocs.io/en/latest/[Zero to JupyterHub with Kubernetes] and the https://binderhub.readthedocs.io/en/latest/[BinderHub] documentation.
+Like the notebook, JupyterLab can be run locally (`python -m jupyter lab` from the command line), or, for the case here, remotely; in both cases, a web browser acts as the environment that the user will use.
 
-Once set up, there will be pods running
+=== JupyterHub
 
-- BinderHub: this runs a webserver (using the Python Tornado package) that allows users to pick a repository and then build a notebook environment from it.
-- JupyterHub: the actual hub that will spawn a new notebook for each new user, as detailed above.
-- Nginx and http-proxy-public: intermediates between the actual outside world, and BinderHub and JupyterHub.
+The JupyterHub is a system where multiple users can start a notebook (or lab) on the same server: each notebook is separate from the other notebooks.
+JupyterHub is the underlying system for remote use of Jupyter notebooks / labs.
 
-Once a user has chosen to build a new environment, a new pod will be created which runs `repo2docker`, a specialized tool to create a Docker container from a list of packages (this tool was written in the context of the BinderHub project).
-Once the container has been built and uploaded to the container registry, this pod will be removed again.
+The hub has a login system, which in our case is directly connected to the underlying system logins and accounts.
+This allows for ssh access to exactly the same system as through JupyterHub.
+This match also allows for standard sharing of data between users (with group and world permissions).
 
-A new pod will now be started (with a name relevant to the used repository; though the pod names are only relevant to administrators, as users will not see these), that runs the actual notebook.
+==== Long-running jobs
 
-Some further details can be found at the relevant https://binderhub.readthedocs.io/en/latest/overview.html[page of the BinderHub documentation], from which the below figure is also taken:
+Note that it is entirely possible to run long-running jobs from the JupyterLab environment, avoiding the need for ssh login.
+Provisions need to be taken that a (compute) job is detached (e.g. with `nohup`, `disown` commands) and output (`stdout`, `stderr`) is directed into files.
+With those provisions, a user can login, start a job with in the Lab terminal, log out, log in elsewhere and find the results.
+This is *not* possible with purely the notebook: logging out (or simply closing the browser tab) removes the connection between the server and the output (the notebook cell), and while a job will complete, it does not know where to send its output (since the notebook cell has gone).
 
-[#img-architecture]
-.The BinderHub architecture
-[link=https://binderhub.readthedocs.io/en/latest/overview.html]
-image::https://binderhub.readthedocs.io/en/latest/_static/images/architecture.png[BinderHub architecture]
+
+=== Data server
+
+The stored data is served through a THREDDS server.
+Some newly created datasets may be stored there as well, for re-use by other users.
+
+Data stored would be
+
+* Standard datasets
+** CMIP5 (total amount: 126 TB)
+** Euro-Cordex (total amount: 44 TB)
+** Other?
+* Derived data
+** Possible (re)shared within the project through the same server
+* Scratch data
+** Generic scratch area for users, with a fair-use policy.
+
+There is 100 TB available (currently 40 TB), so there will need to be prioritisation what sections of the data need to be available (e.g., specific time intervals and variables for CMIP5).
+There will also be a tradeoff between standard datasets, derived data (which is expected to grow during the project) and scratch data available.
+
+
+=== Possible scaling issues
+
+A VM in the cloud may not scale well: cores or memory are hard to adjust while the machine is running.
+It is possible to start a new VM if computation demand is high (automatically, through a scripting interface), but this is something that hasn't been explored yet.
+
+==== Kubernetes use
+
+A standard alternative, used by various cloud providers, is to run Kubernetes.
+Kubernetes scales well for additional compute resources (using so-called pods to run processes in), but it may not work well with large amount of data (50-100 TB) that needs to be readily available.
+It also makes it much harder to directly log in to a system (pod) through ssh.
+Lastly, it is unclear how easy it is to deploy Kubernetes on the cloud system at SURF-Sara; this is something to find out if VMs prove to not be workable.
+
+The convenient thing about working with Kubernetes is that there are already various deployments around that can be used right now: Pangeo-data is one of the better-known (see also the list at the end of this document).
+Note that Kubernetes appears to focus more on scaling computational-wise (allowing compute-intensive jobs to run in new pods created on the fly), but it is, again, unclear how it would deal with large amount of directly accessible data.
