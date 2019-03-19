@@ -5,6 +5,7 @@
     - server_var.yml
     - mount_vars.yml
     - user_vars.yml
+    - docker_vars.yml
   remote_user: ubuntu
   become: true
 
@@ -21,8 +22,6 @@
       name: [emacs, zsh, curl, wget, screen, tmux, ufw, whois, git, build-essential]
       autoremove: yes
 
-  - include: fortran.yml
-
   - include: mount_storage.yml
     loop: "{{ mounts }}"
 
@@ -31,6 +30,8 @@
 # Only include when requiring a new license
 # Usually, one should copy the current one from a backup when re-installing the VM
   - include: letsencrypt.yml
+
+  - include: docker.yml
 
   - include: jupyterhub.yml
 
@@ -45,6 +46,7 @@
 
   - include: thredds.yml
 
+  - include: vsftpd.yml
 
   - name: Restart nginx and JupyterHub services
     block:

@@ -1,8 +1,13 @@
+- name: Test for existence of /mnt/data/users
+  stat:
+    path: /mnt/data/users
+  register: usersdir
+
 - name: Add user with random password
   block:
   - shell: cat /dev/urandom | tr -dc 'a-zA-Z0-9@#$%*_\-' | fold -w 12 | head -n1
     register: randompass
-  - command: "mkpasswd --method=sha-512 {{ randompass.stdout }}"
+  - command: "mkpasswd --method=sha-512 -- {{ randompass.stdout }}"
     register: cryptopass
   - group:
       name: "{{ item.group }}"
@@ -13,23 +18,18 @@
       groups: [jupyterhub, users]
       password: "{{ cryptopass.stdout }}"
       shell: /bin/bash
+      home: "/mnt/data/users/{{ item.user }}"
   - file:
       path: "/mnt/data/users/{{ item.user }}"
-      state: directory
-      owner: "{{ item.user }}"
-      group: "{{ item.group }}"
-      mode: 0750
-  - file:
-      path: "/home/{{ item.user }}"
       mode: 0750
   - debug:
       msg: "{{ item.user }}  {{ item.group }}  {{ randompass.stdout }}"
-
+  when: usersdir.stat.exists
 
 
 # Add a group and user later on, with fixed group id and user id:
 # groupadd -g 1005 <groupname>
 # pw=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9@#$%*_\-' | fold -w 12 | head -n1)
 # Or use: pw=$(openssl rand -base64 12)
-# cryptopass=$(mkpasswd --method=sha-512 $pw)
-# useradd -u 1004 -g <groupname> -G jupyterhub,users -m -p $cryptopass -s /bin/bash <username>
+# cryptopass=$(mkpasswd --method=sha-512 -- $pw)
+# useradd -u 1004 -g <groupname> -G jupyterhub,users -m -b /mnt/data/users -p $cryptopass -s /bin/bash <username>

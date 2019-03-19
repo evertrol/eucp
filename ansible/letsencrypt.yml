@@ -8,12 +8,17 @@
     path: /etc/letsencrypt/archive/{{ servername }}/privkey1.pem
   register: certfile
 
+- name: Test for existing live directory
+  stat:
+    path: /etc/letsencrypt/live/{{ servername }}
+  register: livedir
+
 - name: Set up Letsencrypt license
   block:
     - apt:
         name: [letsencrypt]
     - shell:
-        certbot certonly --standalone -d server.eucp-nlesc.surf-hosted.nl
+        certbot certonly --standalone -d {{ servername }} -n --agree-tos -m {{ adminemail }}
     # When JupyterHub is run standalone (without Nginx),
     # the jupyterhub accounts needs to be able to read the certificate
     # Ensure the base directory is readable by all, and
@@ -49,3 +54,4 @@
         src: /etc/letsencrypt/archive/{{ servername }}
         dest: /etc/letsencrypt/live/{{ servername }}
         state: link
+  when: not livedir.stat.exists

@@ -7,7 +7,7 @@
         name: jupyterhub
         group: jupyterhub
         # Need shadow for PAM authentication
-        groups: shadow
+        groups: [shadow, docker]
         create_home: no
         password: !
         state: present
@@ -18,26 +18,23 @@
         owner: jupyterhub
         group: jupyterhub
       loop: [/srv/jupyterhub, /etc/jupyterhub]
-    - command: /opt/conda/bin/jupyterhub --generate-config -f /etc/jupyterhub/jupyterhub_config.py && chown jupyterhub:jupyterhub /etc/jupyterhub/jupyterhub_config.py
-      args:
-        creates: /etc/jupyterhub/jupyterhub_config.py
-    - lineinfile:
-        path: /etc/jupyterhub/jupyterhub_config.py
-        state: present
-        line: "{{ item }}"
-      loop:
-        - "c.JupyterHub.bind_url = 'http://127.0.0.1:8000'"
-        - "c.Spawner.default_url = '/lab'"
-        - "c.JupyterHub.spawner_class = 'sudospawner.SudoSpawner'"
-        - "c.Spawner.cmd = ['jupyter-labhub']"
-        - "#c.Application.log_level = 'DEBUG'"
-        - "#c.Spawner.debug = True"
-        - "#c.SudoSpawner.debug = True"
-        - "# The following settings are used when running JupyterHub by itself, without a proxy"
-        - "#c.JupyterHub.bind_url = 'http://server.eucp-nlesc.surf-hosted.nl:8081'"
-        - "#c.JupyterHub.ssl_key = '/etc/letsencrypt/live/server.eucp-nlesc.surf-hosted.nl/privkey.pem'"
-        - "#c.JupyterHub.ssl_cert = '/etc/letsencrypt/live/server.eucp-nlesc.surf-hosted.nl/fullchain.pem'"
 
+    - template:
+        src: systemgroupspawner.py
+        dest: /etc/jupyterhub/systemgroupspawner.py
+        mode: 0644
+        owner: jupyterhub
+        group: jupyterhub
+
+    - template:
+        src: jupyterhub_config.py
+        dest: /etc/jupyterhub/jupyterhub_config.py
+        mode: 0644
+        owner: jupyterhub
+        group: jupyterhub
+
+    # Note: not necessary with the SystemUser/GroupSpawner; kept
+    # in case we'd like to switch back to the SudoSpawner
     - copy:
         dest: /opt/conda/bin/sudospawner-singleuser
         mode: 0755
