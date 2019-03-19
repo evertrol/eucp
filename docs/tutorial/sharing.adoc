@@ -1,0 +1,110 @@
+= Sharing notebooks
+
+There is no service implemented to easily share notebooks, either between EUCP users or with the outside world.
+This may happen in the future, but for now, users will have to make their own arrangements.
+It can, however, be straightforward to arrange this yourself.
+
+== Internally
+
+Users are grouped by institutions, and their *nix permissions follow this.
+This means that people from the same institute can peek at each other codes (through ssh or the Lab terminal), but not further out.
+You can see your group by starting the Lab terminal and typing `groups` (all commands below should be executed in the terminal).
+This should lists all the groups your account belongs to, with the first group being the main group.
+Alternatively, type `ls -la` and you'll get an overview of the files in your directory, together with their permission, owners and group owners.
+Files will be owned by your account, except for the parent directory (`..`), which is owned by root.
+You'll see that the permissions are generally `-rw-r-----` (directories have an additional `x`).
+This means these files are read- and writeable by you, and only readable by your group.
+Others (that is, outside your group), can't read or write anything.
+
+If you want to make a file readable for others (but still internal on the EUCP server), add read permission to the file:
+
+[source]
+----
+chmod o+r myfile.txt
+----
+
+This adds read (`r`) permission to others (`o`).
+Similarly, prevent fellow group users from reading your files, remove the group read permission:
+
+[source]
+----
+chmod g-r myfile.txt
+----
+
+In the first case, you will also need to make your home directory readable for other users:
+
+[source]
+----
+chmod o+rx .
+----
+
+The single dot `.` indicates your current (home) directory, and directories also need to be executable (`x`) to be able to view them.
+
+To actually access other people's directories, use the special `_users` directory.
+Don't remove this `_users` (nor the `_data`) special directory (you actually can't)!
+It exists, because if you would change to the parent directory from your home directory, you'll be stuck in your Jupyter container.
+There is only one user in that container (plus a default Jupyter user, `jovyan`), and you will not see the other users.
+The `_users` directory correponds to the actual base directory of the underlying virtual machine, and let's you connect to other user's directories.
+
+Similarly, the `_data` directory leads directly to the data volume that has all the datasets.
+Both these special directories are mounted read-only into the container.
+
+== Externally
+
+For external sharing, either publicly or privately among a small set of collaborators, a service like GitHub or GitLab may be useful.
+Both allow one to set up a private repository for free, and then let collaborators access them.
+GitHub has a limit on the number of collaborators for a free private repository, GitLab does not.
+Below is a suggested workflow for sharing with a set of people, using GitLab.
+
+Two bonus conveniences of using GitHub or GitLab:
+
+* both render notebooks automatically.
+If you include the output in the notebook, they will show the rendered notebook with output.
+Note that GitHub and GitLab don't run the actual notebook, they just the contents (except for rendering Markdown cells).
+
+* It is easy to open up a private repository to the world.
+Once you're happy with your notebook, and have perhaps published the results, it is a simple permission change to make a repository public, so that people can actually see your analysis and follow along.
+
+Note that their are multiple other ways to share documents, whether they are notebooks, scripts or texts, such as Google Drive and variants.
+The GitHub/GitLab option is highlighted, because it may introduce people unfamiliar with git and services like GitHub to them.
+While it will not alwyas be the best option, it can, for example, be practical in case things start to expand beyond a simple notebook file, as it will keep things all in one place, and have the option to revert back to a previous working version in case mistakes were introduced.
+
+=== Sharing notebooks with GitLab
+
+This assumes you have an account for GitLab; GitLab allows people to (also) register an account with their Google, Twitter, Bitbucket of GitHub(!) account, if you don't want to yet make a new account.
+
+Once signed in, create a new repository (green button top right).
+Give it a logical and practial name, and check the other settings (by default, it should be set up to be a private project, which is likely what you want). Check the "Initialize repository with a README" box, and click "Create project".
+
+The next page shows the new project's repository.
+If you want to edit the readme file, click it and you have the option to edit it (button in the center of the menu to the right).
+If you do that, don't forget to click the green "Commit changes" button at the bottom of the text editor.
+
+You can navigate back to the main repository page near the top, where there'll be a breadcrumb navigation indicating <your account> -> <your project> -> repository.
+Click the project name: the README should be rendered automatically near the bottom of the page.
+
+Somewhere a few lines below the top, you should find a line like `[master] <project> / +v` (GitLab has a somewhat overhelming interface).
+Click the dropdown `+` button, and select "upload file".
+This is where you can upload your notebook file.
+Keep in mind that this is uploaded from your local machine, so you may have to download the file from the JupyterHub first.
+We may try and improve this workflow in the future.
+
+Once uploaded, give it some time, and if all worked well, GitLab should automatically render a preview of your notebook, for ease of viewing.
+
+You're done: you have your notebook in a private repository on GitLab.
+Now to share it with selected people.
+
+==== Adding a collaborator
+
+Make sure your at the page of your repository first.
+To add a collaborator, go to "settings" at the bottom in the left side bar.
+Select "members" from the menu, and search for people to invite and give access to your repository.
+Usually, this is done by typing "@" and then their GitLab user name.
+Reporter or Developer are the best roles to give (Guest is somewhat limited).
+
+Once added to the repository, people can now browse it and fork or clone it, or simply download the notebook file themselves, while it is otherwise still private to the outside world.
+
+Note that the collaborator applies to the whole repository.
+If you have another notebook that you'd like to share with a different set of people, you should create a new repository for this.
+On the other hand, if you have multiple notebooks (or other scripts, programs or texts) that you'd like to share with the same set of people, you can add them to the current repository.
+

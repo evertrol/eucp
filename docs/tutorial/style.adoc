@@ -1,0 +1,48 @@
+# Good notebook style
+
+These are some guidelines to make your notebooks more manageable and readable (by yourself and others).
+
+* Split your cells by code topic.
+For example, defining constants could be done in a single cell. And plotting a figure in another separate cell.
+In most cases, a single cell would correspond to a single function.
+
+* Import statements usually go at the top.
+You may want to make exceptions for some cells, for example a cell plotting a figure, where you import the plotting packages only in that cell.
+In that way, the plotting imports don't extend and pollute the other import statements, and, if the plot is not run, no essential imports are lost.
+
+* If you want to time execution of a piece of code, use one of the following magic commands instead of coding your own timers:
+%%time::
+  Times the execution of the whole cell.
+Put this magic command at the top of the cell.
+%time::
+  Times the execution of the line following it.
+For example, `%time 2**128`.
+%timeit::
+  Times the execution of the line following it, to benchmark it.
+This runs the line multiple times (in contrast to `%time`), and reports the average of the fastest results.
+`%time` also has a cell variant `%%timeit`.
+For more details, see the https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-time[`%time` and `%timeit` documentation].
+
+* Use standard Python (or Julia, or R) style.
+For Python, see https://www.python.org/dev/peps/pep-0008[PEP 8] (Python Enhancement Proposal).
+A very brief summary:
+** Put whitespace around comma's and operators (`=`, `+`, `>` etc).
+I personally only don't do this inside array indices, e.g. `myarray[1:3,4:10]`.
+** Use four space indentation.
+Do not use tabs (most Python-aware editors will automatically convert <tab> to four spaces).
+** Use Lowercase variables, possibly with underscores to separate wordparts.
+** Avoid importing everything from a package.
+That is, do not do something like `from numpy import *`.
+This can overwrite variables and functions defined or imported earlier, without noticing.
+Instead, keep the namespace, and possibly use some (established) abbrevations.
+For example, the following imports are fairly default:
++
+[source]
+----
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import pandas as pd
+----
++
+and then use `a = np.zeros(10)` and the like in your code.

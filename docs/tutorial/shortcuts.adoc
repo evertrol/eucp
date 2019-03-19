@@ -1,0 +1,78 @@
+= Jupyter Lab keyboard shortcuts
+
+There are a number of keyboard shortcuts which can make life easier, instead of having to hunt down the correct menu item.
+Note that you have to be in command mode for most of these to work; hit escape to ensure you're in command mode.
+
+* Shift-enter (also works in editing mode)
+Execute the current cell, and move to the next cell
+
+* s (control-s or command-s (MacOS) in editing mode)
+Save the notebook
+
+* i i (twice i key)
+Interrupt the kernel; aborts notebook execution
+
+* select a block, then
+** control-] to indent the block (command-] on MacOS)
+** control-[ to dedent the block (command-[ on MacOS)
+
+* z
+Reverse operation on cells (notebook level)
+
+* control/command-z
+Reverse actions inside current cell
+
+* select cells
+In edit mode, shift-click or shift-up/down arrow to select a range of cells (surrounding blue outline).
+Note that the brighter blue vertical line on the left indicates the current active (selected) cell.
+Once selected, you can copy \(C), cut (X) or paste below the current selection (V) the selected cells.
+
+
+
+== Escapes and magic commands
+
+You can use an exclamation mark in front of a shell command in a notebook cell to escape the (Python) interpreter and execute the corresponding shell command.
+For example:
+[source]
+----
+!pwd
+----
+yields the current directory.
+
+Several shell commands don't even need this escape, including the above one: `pwd`, `ls`, `cd` (with or without arguments) work directly in a notebook shell.
+These are built into the Jupyter notebook for you.
+
+=== Magic commands
+
+Jupyter also provides some magic (meta) commands.
+These start with a percent sign: `%`.
+
+`%time`, `%timeit` and `%%time` are the better known ones, and most useful:
+
+* `%time` times the execution of the line it is on: `%time list(range(10000))`.
+* `%timeit` does the same, but runs the line several times, to find the fastest three runs.
+* `%%time` times the whole cell execution, not just a single line.
+  Put this command on a single line by itself at the top of the cell.
+
+`%env` sets environment variables, which makes it a bit easier than using `os.environ`.
+For example, `%env OMP_NUM_THREADS=4`.
+
+`%run` executes a Python script, or even another notebook, while still remaining inside the current notebook cell.
+For example, `%run ./myscript.py` or `%run ./somenotebook.ipynb`.
+Once run, you are then able to use variables and their values from that script or notebook in your current notebook.
+
+`%store` allows one to store a variable, and use it in another notebook:
+[source]
+----
+a = numpy.random.randint(1, 100, 10000)   # array of 10000 random integers between 1 and 100
+%store a
+----
+In another notebook, use the `-r` (retrieve) flag:
+[source]
+----
+%store -r a
+a
+array([89, 36, 66, ..., 58, 68, 59])
+----
+
+Most other magic commands are simply a variant of shell commands; you can see the full list with `%lsmagic`.

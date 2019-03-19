@@ -2,10 +2,10 @@
 :toc:
 :sectlinks:
 
-This tutorials aims to show basic usage of a Jupyter notebook, with some details geared towards users inside the EUCP project.
-For more generic details on Jupyter notebooks and usage, there are lots of resources on the internet for further reading.
+This introduction aims to show basic usage of a Jupyter notebook, with some details geared towards users inside the EUCP project.
+For more details on Jupyter notebooks and usage, there are lots of resources on the internet for further reading.
 
-This particular tutorial will not show any actual code examples: it keeps it more general, and tries to point out how the Jupyter Hub interface works, and what some things are to be aware of.
+This particular introduction will not show any actual code examples: it keeps it more general, and tries to point out how the Jupyter Hub interface works, and what some things are to be aware of.
 There will be pointers near the end to actual code examples.
 The latter, though, have more to do with how to perform some specific analysis in a specific language (Python, mostly), than how to work with a Jupyter Hub.
 
@@ -14,10 +14,23 @@ Note that you can get more (and possibly better) documentation from the help men
 == Logging in
 
 You should have a login with a password; the NLeSC should be able to provide you with one.
-You can then log in to the notebook interface at https://server.eucp-nlesc.surf-hosted.nl:8081 .
-Note from the address that this is very temporary at the moment: the port is 8081 instead of the default 443.
+You can then log in to the notebook interface at https://server.eucp-nlesc.surf-hosted.nl .
 
 Once logged in, you're inside the Jupyter lab environment: from here, you can start a notebook from the launcher in the right pane, an editor or even a terminal (running in your browser, but fully functional).
+
+The picture below is annotated to indicate some essential parts of the interface, which will be referred to elsewhere in this documentation. See also https://jupyterlab.readthedocs.io/en/stable/user/interface.html for a more detailed overview.
+
+.The main Jupyter Lab interface
+[#jupyterlab-interface]
+image::jupyterlab-interface.png[Main Jupyter Lab interface,800,600]
+
+The launcher is your main starting point; click the plus symbol in the file browser  toolbar to open it if you don't see it.
+From the launcher, you can open an empty notebook, a "console", a terminal (opens in your home directory) or a plain text editor.
+The console is essentially the classic Python (or Julia, or R) command line interpreter; it is rarely useful.
+
+You can also open files directly by double clicking on their name, or with right click, "open".
+The program with which it opens will depend on the file type, that is, the extension (the "precipitation-trend.ipynb" would open with a notebook; usually, the metadata inside the file tells Jupyter whether this is a Python, Julia or R notebook).
+
 
 For people used to the default Jupyter notebook interface, you can reach this in two ways:
 
@@ -28,7 +41,7 @@ The latter indicates how to get back from the classic interface to the lab envir
 
 Sessions are saved across logins: if you entered something in a notebook and then log out, it will be there once you log back in. Also, if you close a notebook, you can easily reopen it from the panel on the left (provided the panel is in file browser mode: click the folder icon just below the Jupyter icon in the top left).
 
-To log out, don't simply close the browser tab: select the Hub -> Logout menu item in the Lab environment. This will prevent other people (mis)using your Jupyter session.
+To properly log out, don't simply close the browser tab: select the Hub -> Logout menu item in the Lab environment. This will prevent other people (mis)using your Jupyter session.
 
 === ssh login
 
@@ -43,6 +56,7 @@ And of course, you can use ssh keys as well.
 
 For convenience, the `screen` and `tmux` terminal emulators are installed.
 
+Limited packages are available when using the ssh access; the normal JupyterHub login should be used for that.
 Note that several goals for which you may want to use `ssh`, can also be achieved using the terminal application in the Jupyter Lab environment, including running long-running programs.
 See below for more information on the latter.
 
@@ -84,12 +98,9 @@ Select the cell type from the "Code" menu item at the top of the notebook.
 Note that "code" type of cells have an (empty) number holder in front of them `[ ]:`.
 Markdown is a simple mark-up language, and it is useful if you want to provide a bit more layout (lists, tables, headings, indentated text) than you can achieve with raw text.
 You'll need to "run" a Markdown cell to actually render it into HTML.
-If you select to edit a Markdown cell, it will automatically revert to Markdown until you rerun it.
+If you select to edit a Markdown cell, it will automatically revert to Markdown (from HTML) until you rerun it, after which it will show rendered HTML again.
 
-The code type is always that of the chosen kernel.
-Currently, only Python 3 and R is available.
-There are plans to provide a Julia kernel as well (Julia provides a good and free MATLAB alternative).
-
+The code type is always that of the chosen kernel. You can change the kernel of a notebook, although this will be of limited use (it was useful for transitionting Python 2 to Python 3 code).
 There are ways of running, for example, an R code block in a few cells inside a Jupyter Python (3) notebook.
 For reproducibility and convenience of other users, however, we don't recommend this.
 
@@ -158,53 +169,6 @@ But their output may not be visible anymore: the kernel has lost the connection 
 Always assign important output to a variable, so you can retrieve it later.
 This prevents losing results when e.g. accidentally closing a browser tab.
 
-== Escapes and magic commands
-
-You can use an exclamation mark in front of a shell command in a notebook cell to escape the (Python) interpreter and execute the corresponding shell command.
-For example:
-[source]
-----
-!pwd
-----
-yields the current directory.
-
-Several shell commands don't even need this escape, including the above one: `pwd`, `ls`, `cd` (with or without arguments) work directly in a notebook shell.
-These are built into the Jupyter notebook for you.
-
-=== Magic commands
-
-Jupyter also provides some magic (meta) commands.
-These start with a percent sign: `%`.
-
-`%time`, `%timeit` and `%%time` are the better known ones, and most useful:
-
-* `%time` times the execution of the line it is on: `%time list(range(10000))`.
-* `%timeit` does the same, but runs the line several times, to find the fastest three runs.
-* `%%time` times the whole cell execution, not just a single line.
-  Put this command on a single line by itself at the top of the cell.
-
-`%env` sets environment variables, which makes it a bit easier than using `os.environ`.
-For example, `%env OMP_NUM_THREADS=4`.
-
-`%run` executes a Python script, or even another notebook, while still remaining inside the current notebook cell.
-For example, `%run ./myscript.py` or `%run ./somenotebook.ipynb`.
-Once run, you are then able to use variables and their values from that script or notebook in your current notebook.
-
-`%store` allows one to store a variable, and use it in another notebook:
-[source]
-----
-a = numpy.random.randint(1, 100, 10000)   # array of 10000 random integers between 1 and 100
-%store a
-----
-In another notebook, use the `-r` (retrieve) flag:
-[source]
-----
-%store -r a
-a
-array([89, 36, 66, ..., 58, 68, 59])
-----
-
-Most magic commands are a variant of shell commands though; you can see the full list with `%lsmagic`.
 
 
 == Terminal interface

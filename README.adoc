@@ -4,118 +4,45 @@ A notebook and data sharing system for climate research.
 
 This document is work in progress.
 
-Last update: 6-12-2018
+Last update: 15-3-2019
 
 
 == Goals
 
-This repository documents the infrastructure for a notebook and data sharing system for use within the European Climate Prediction (EUCP) project.
+This repository contains and documents the infrastructure for a notebook and data sharing system for use within the European Climate Prediction (EUCP) project, a Horizon 2020 project.
 
 The notebook system allows scientists to use a uniform interface to perform their analysis on climate data sets.
 It runs on the same server where the data is stored, or very close to a data server, removing the need to download the required data sets locally.
 Data access should also be easy, and fast.
-The use of notebooks also allows easier sharing of analysis, for example with peers (direct collaborators, referees etc.) and a more general audience.
+The use of notebooks also allows easier sharing of analyses, for example with peers (direct collaborators, referees etc.) and a more general audience.
 In addition, the analysis steps are to be saved (including history versioning) for reproducibility.
+
+== Setup
+
+For an overview of the architecture and configuration used, see the link:docs/README.adoc[docs directory].
+
+An introduction to Jupyter can be found in the link:docs/tutorial[tutorial section], while examples notebooks are available in the link:examples/[examples directory].
+
+The details of the setup can be found in the link:ansible/[Ansible directory].
+The Ansible playbook is used to configure the server.
+The details of the Docker image can be found in the link:docker/[Docker directory].
 
 == Resources
 
-The server and storage will be hosted at the SURFsara (NLeSC partner) data center.
-The total amount of data storage available is (currently) 100 TB.
+The server and storage is hosted at the SURFsara (NLeSC partner) data center.
+The total amount of data storage available is (currently) 40 TB, and will be 100 TB later in the project.
 This includes the need for scratch space for individual users during analysis runs.
 
-The server is an Ubuntu virtual machine (VM); the details on the used resources (memory, cores etc) are yet to be decided.
-Users are allowed access to the notebooks, or to the machine directly using ssh.
-The former is preferred, since this makes consistency, sharing of code and provenance generally easier.
+The current setup is a Ubuntu virtual machine (VM), with eight cores.
 
-The storage itself uses CEPH datablocks.
+The storage uses CEPH datablocks.
 These will be made persistent, so that scratch space will persist between restarts of the VM.
 The home directories of the users will also be saved.
 These directories, however, should *not* be used or seen as a place for permanent storage: scripts and notebooks should be stored elsewhere, for example in (private) repositories.
 
 Some details about the system used can be found at https://doc.hpccloud.surfsara.nl[SURFsara HPC cloud documentation].
 
-An Ansible playbook is available in the link:ansible/ subdirectory of this repository for setting up the virtual machine.
 
-=== Resource policies
-
-Separate storage diskspace is provided as scratch space for large datasets; each user has a subdirectory here they can use.
-A fair-share policy will initially be used: users can store any amount of data they like (within system limits), but are expected to clean up disk space in time, and not use all resources.
-A similar policy will be used for CPU resources, since it is expected that most users will only require computational resources a fraction of the time.
-Most time is likely devoted to working on the analyses notebooks and scripts; it is *not* expected that e.g. long-running simulations are run on the system.
-It is expected that some analyses runs will take several days and require multiple CPU cores, for example to iterate over all available models.
-This, however, is not expected to be the nominal mode of use initially.
-
-=== Possible scaling issues
-
-A VM in the cloud may not scale well: cores or memory are hard to adjust while the machine is running.
-It is possible to start a new VM if computation demand is high (automatically, through a scripting interface), but this is something that hasn't been explored yet.
-
-==== Kubernetes use
-
-A standard alternative, used by various cloud providers, is to run Kubernetes.
-Kubernetes scales well for additional compute resources (using so-called pods to run processes in), but it may not work well with large amount of data (50-100 TB) that needs to be readily available.
-It also makes it much harder to directly log in to a system (pod) through ssh.
-Lastly, it is unclear how easy it is to deploy Kubernetes on the cloud system at SURF-Sara; this is something to find out if VMs prove to not be workable.
-
-The convenient thing about working with Kubernetes is that there are already various deployments around that can be used right now: Pangeo-data is one of the better-known (see also the list at the end of this document).
-Note that Kubernetes appears to focus more on scaling computational-wise (allowing compute-intensive jobs to run in new pods created on the fly), but it is, again, unclear how it would deal with large amount of directly accessible data.
-
-
-
-== Implementation
-
-The notebook implementation used is the Jupyter notebook.
-One of the main uses of Jupyter is in data analysis, since it includes output, including visualisations, directly in the notebook.
-In addition, Python is widely used in the sciences for analysis, and nowadays a wide variety of packages (libraries) exist to help with that.
-
-Note that, while the Jupyter notebook comes from the Python world and is largely programmed in Python (with JavaScript at the user interface side), it allows a variety of "kernels" to run in the notebooks.
-This includes kernels for R and Julia, as well as various Python versions (notably, versions 2.x versus 3.x).
-In all cases, the notebook simply functions as an mediator, passing input from the user to the relevant interpreter or compiler behind the scenes, and output from the interpreter or compiler back to the user.
-
-The widespread use of the Jupyter notebook should help with its usage: many users may not have to learn a new interface, or they may easily find help (either from (local) colleagues or on the internet) with its use.
-
-=== Lab environment
-
-Over the past years, the Jupyter notebook environment has been extended to include a shell environment with a command line and a text editor (still running in a web browser), and the option to start multiple sessions and kernels (e.g., Python 2, Python 3, R, Julia) all from the same session.
-This is now called http://jupyterlab.readthedocs.io/en/latest/[JupyterLab].
-
-Like the notebook, JupyterLab can be run locally (`python -m jupyter lab` from the command line), or, for the case here, remotely; in both cases, a web browser acts as the environment that the user will use.
-
-=== JupyterHub
-
-The JupyterHub is a system where multiple users can start a notebook (or lab) on the same server: each notebook is separate from the other notebooks.
-JupyterHub is the underlying system for remote use of Jupyter notebooks / labs.
-
-The hub has a login system, which in our case is directly connected to the underlying system logins and accounts.
-This allows for ssh access to exactly the same system as through JupyterHub.
-This match also allows for standard sharing of data between users (with group and world permissions).
-
-==== Long-running jobs
-
-Note that it is entirely possible to run long-running jobs from the JupyterLab environment, avoiding the need for ssh login.
-Provisions need to be taken that a (compute) job is detached (e.g. with `nohup`, `disown` commands) and output (`stdout`, `stderr`) is directed into files.
-With those provisions, a user can login, start a job with in the Lab terminal, log out, log in elsewhere and find the results.
-This is *not* possible with purely the notebook: logging out (or simply closing the browser tab) removes the connection between the server and the output (the notebook cell), and while a job will complete, it does not know where to send its output (since the notebook cell has gone).
-
-
-=== Data server
-
-The stored data may be served using an OpenDaP server, or a THREDDS server.
-Some newly created datasets may be stored there as well, for re-use by other users.
-
-Data stored would be
-
-* Standard datasets
-** CMIP5 (total amount: 126 TB)
-** Euro-Cordex (total amount: 44 TB)
-** Other?
-* Derived data
-** Possible (re)shared within the project through the same server
-* Scratch data
-** Generic scratch area for users, with a fair-use policy.
-
-There is 100 TB available, so there will need to be prioritisation what sections of the data need to be available (e.g., specific time intervals and variables for CMIP5).
-There will also be a tradeoff between standard datasets, derived data (which is expected to grow during the project) and scratch data available.
 
 = Related projects
 
