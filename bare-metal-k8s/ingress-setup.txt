@@ -1,0 +1,42 @@
+Set up mandatory resources:
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+
+Check:
+  kubectl get pods --all-namespaces -l app=ingress-nginx
+
+Grab the generic cloud setup:
+  curl https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/cloud-generic.yaml > mycloud.yml
+
+Edit cloud-generic.yaml: add the available external IP(s) (from your nodes) to the spec:
+  spec:
+    ....
+    externalIPs:
+      - 145.100.59.158
+
+and apply:
+  kubectl apply -f mycloud.yml
+
+
+Allow http(s) traffic on the relevant node(s):
+  sudo ufw allow http
+  sudo ufw allow https
+
+Find the IP where the proxy public is pointing to:
+  proxyip=$(kc get svc -n jhub proxy-public -o=custom-columns='IP:.spec.clusterIP' --no-headers)
+
+Set up an ingress for this proxy:
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-nginx
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          backend:
+            serviceName: proxy-public
+            servicePort: 80

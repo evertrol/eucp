@@ -1,0 +1,814 @@
+= Installing JupyterHub with Kubernetes on bare metal virtual machines
+Evert Rol <e.rol@esciencecenter.nl>
+v1.0, 2019-04-15
+:toc:
+
+== Background
+
+The background setup is within a European climate research project; we want to provide climate scientist a place where they can perform their analyses in the cloud.
+This has two goals:
+
+1. Provide a large amount of data next to the analysis environment, so that people do not have to download data to their local machine: the data can stay put in one place, and will not need to be manually copied multiple times.
+2. Provide a setup where scientist can create *reproducible* analyses, with annotated and clean code, and versioned data and code.
+
+We have opted for Jupyter notebooks, since
+
+- these are more and more commonplace
+- they are relatively straightforward to rerun by other people.
+Also, various websites allow them to be viewed, including the results (that is, the output, including figures), without having to rerun the code.
+This makes it easy to point other scientist directly to a notebook to see how the analysis was done exactly.
+- notebooks allow for the use of multiple languages, making the transition for some people easier (Python will be the main language used, but people used to, for example, R, can use the notebook environment just as well
+
+In fact, we will not use the standard notebook setup, but the newer Jupyter Lab environment, which also provides a terminal.
+This allows even more options to transition from scripts and, for example, Fortran programs, to a more standardised (Python) notebook.
+
+The goal is to provide this Jupyter Lab setup through a Jupyter Hub in a cloud environment, with up to 100 TB parked directly next to it.
+Scientists can log in, write and fire up their analysis script, and let it crunch through all the necessary data.
+
+=== Current setup
+
+We use the SURFSara https://userinfo.surfsara.nl/systems/hpc-cloud[high-performance computing cloud (HPC Cloud) facility].
+This uses OpenNebula to orchestrate itself.
+We have a virtual machine (VM) running in this cloud, with a JupyterHub.
+Next to the VM, we have currently 40 TB of data storage, in the form of https://ceph.com/[Ceph storage], which holds the necessary scientific data.
+On the same VM, we run a data server that provides a (web) interface to the data on Ceph.
+
+Users also have a standard home directory on the VM itself, and can access this through `ssh` if so wanted.
+The preferred method is the JupyterLab interface, which provides more installed scientific software in its Docker container.
+Inside JupyterLab, there are two "exit" points out of the container: one to the data directory, and one to the users (`/home`) directory on the VM.
+Thus, from with the JupyterHub/Lab, the data can be accessed either with a URL, or if so wanted, with a file path.
+Users can also more easily share files through a simply `cp` from another users home directory (though using a file upload to a cloud service, for example something as simple as a git repository, would be the more natural way inside a JupyterHub. Again, this is done to ease the transition for scientists used to working on local systems).
+
+=== Scaling
+
+There is one problem with the above setup: it doesn't scale very well.
+At the moment, the VM has access to eight CPU cores.
+If, at some point, multiple scientists want to run some intensive analysis on the data, they may stress out all the cores, and things will slow down.
+Ideally, the VM should scale with the activity on it, but this would require bringing down the VM, and starting a new VM with extra CPU cores.
+This, obviously, doesn't work: currently running processes are lost, and there is extra downtime, with all the inconveniences.
+Yes, the SURFSara HPC Cloud info page (linked above) does mention "Dynamically scalable HPC on the cloud", but as far as I can tell, this means you can choose your favourite VM with regards to cores and memory; it does not involve scaling a live VM.
+
+Hence, I have been looking at Kubernetes, which appears to be somewhat the de facto setup for scaling a cloud environment.
+Unfortunately, Kubernetes is not installed on the HPC Cloud facility.
+Below is my attempt and guide at installing Kubernetes on the SURFSara HPC Cloud facility, and the JupyterHub on top of that (including access to permanent user home directories and a Ceph disk with 100 TB of data).
+
+(There is another option: let each scientist start their own VM when needed.
+This would require a less common setup, where scientists have to learn to handle the HPC Cloud.
+While a default VM for climate scientist can be created (just like a Docker container), all in all, I feel this creates to many barriers for use.)
+
+
+== Installing Kubernetes
+
+=== Tools
+
+The tool for setting up the bare VMs with the necessary software is https://www.ansible.com/[Ansible].
+
+
+=== Set up an initial cluster
+
+I have started with three VMs, all based on the default Ubuntu 18.04.02 Long Term Service (LTS) (code-named Bionic Beaver, or simply Bionic, which is used from hereon).
+These are all two cores and 3 GB memory.
+One will serve as a controller, and the other two nodes are the workers.
+All Kubernetes pods will be running on the workers, nothing on the controller.
+A standard VM is set up such that my public key will be installed in the `ubuntu` administrator account, so I have passwordless access into that account, and from there I can install anything with `sudo`.
+The default VM has ports 22 (ssh) inbound and ports 53 (dns), 67 and 68 (dhcp) open to the outside world; all other ports are blocked by default.
+
+==== Hostname
+
+If your VM system does as mine does, then every node will have the same hostname (named partly after the OS: `packer-Ubuntu-18`).
+This is going to cause problems with Kubernetes, at least in my experience.
+I have changed the hostnames on each node (simply to `node0`, `node1` etc), and altered the `/etc/hosts` accordingly:
+
+[source]
+----
+export hostname=node0
+sed -i.bck -E  's/^127\.0\.1\.1..*(packer\-Ubuntu\-[[:digit:]][[:digit:]]*)$/127.0.1.1       \1-Server    node0/' /etc/hosts
+sed -i.bck -E  's/^127\.0\.0\.1\s\s*(packer\-Ubuntu\-[[:digit:]][[:digit:]]*)$/127.0.0.1 node0/' /etc/hosts
+----
+
+
+=== Installing Docker and Kubernetes packages
+
+There is no officially supported Kubernetes package for Bionic yet: this installation uses the 16.04 (Xenial) version, which so far, works fine on Bionic.
+I have opted to install Kubernetes version 1.13.5, even though 1.14.0 is just out.
+This had one slightly unfortunate side effect: the Docker package in Ubuntu seems to have gotten updated, and Kubernetes will complain the standard package is a non-supported version.
+Thus, I had to add both the Kubernetes and Docker Ubuntu repositories to the Ubuntu package manager.
+
+First update apt:
+[source]
+----
+apt update
+----
+
+If your version of apt is less than 1.5, you need to install the `apt-transport-https` package (for details, see https://whydoesaptnotusehttps.com/):
+[source]
+----
+apt install apt-transport-https
+----
+
+On Bionic, the version of apt is 1.6, so there is no need for this.
+
+Next, get the keys for Google's and Docker's package repositories and add them to apt:
+[source]
+----
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+----
+
+Add the repositories to the list of apt repositories:
+
+[source]
+----
+cat > /etc/apt/sources.list.d/docker.list <<EOF
+deb http://download.docker.com/linux/ubuntu xenial stable
+EOF
+cat > /etc/apt/sources.list.d/kubernetes.list <<EOF
+deb http://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+apt update
+----
+
+(That is, any file with valid repository entry in `/etc/apt/sources.list.d/` will be picked up and its contents added to the apt repositories.)
+
+==== Install Docker
+
+Install docker (nowadays, the package is called `docker-ce`. Don't use `docker.io`, `docker-engine` or other variants.):
+
+[source]
+----
+sudo apt install docker-ce=18.06.3~ce~3-0~ubuntu
+----
+
+==== Extra disk space for Docker images
+
+Here, I had to take an extra step: the disk images of the VMs are not large enough to store all the images that Docker pulls from its repository.
+Hence, I had to point the Docker system directory elsewhere, as follows:
+
+Stop Docker:
+
+[source]
+----
+sudo systemctl stop docker
+----
+
+Create a `/etc/docker/daemon.json` with a single entry:
+
+[source]
+----
+sudo cat > /etc/docker/daemon.json <<EOF
+{
+  "graph":"/mnt/data/docker"
+}
+EOF
+----
+
+That will point Docker to look in the `/mnt/data/docker` directory. Docker will ensure the subdirectory is made, you just have to make sure the mount point `/mnt/data` is correct.
+If you need this extra space at all, of course: my VM disk sizes are 10 GB, and a single Jupyter datascience notebook Docker image is already some 6.22 GB.
+
+Now, restart Docker and verify it's running correctly:
+
+[source]
+----
+sudo systemctl start docker
+systemctl status docker
+sudo ls /mnt/data/docker
+----
+
+
+==== Kubernetes package installation
+
+Kubernetes is a straightforward install:
+
+[source]
+----
+sudo apt install kubeadm=1.13.5-00 kubelet=1.13.5-00 kubectl=1.13.5-00
+----
+
+=== Set up Kubernetes
+
+On the controller node, you'll need to open some ports.
+The following steps need only to be done on your controller node, thus, ssh into your controller.
+I use ufw, install it with `sudo apt install ufw` if it's not there (ufw is the abbreviation of uncomplicated firewall, and is a frontend for `iptables`).
+I restrict the access to the necessary Kubernetes ports to hosts within the cloud network, which has (roughly) the subnet of `145.100.56.0/22`:
+
+[source]
+----
+sudo ufw allow proto tcp from 145.100.56.0/22 to any port 6443,2379,2380,10250,10251,10252
+sudo ufw status
+----
+
+Now, initialise the cluster at your controller:
+
+[source]
+----
+sudo kubeadm init --pod-network-cidr {{ 192.168.64.0/18 }} --service-cidr {{ 192.168.0.0/18 }}
+----
+
+NOTE: I specify both the pod network Classless Inter-Domain Routing (CIDR), and that of the services.
+Most guides and examples only specify the `--pod-network-cidr` option.
+I also do not use the standard `10.244.0.0/16` for the pod network, given in most examples.
+The reason for this is that there is an internal network in the HPC Cloud that falls close to, if not overlaps with, this subnet.
+I want to avoid any clashes between these networks, hence I'm using a different network, both for the pods and the services.
+As an extra, in the near future, I hope to be able to use the internal network addresses as external IPs within the Kubernetes cluster.
+That way, the outward facing public IPs (the ones in the `145.100.0.0/22` range) will only have the `ssh` port open.
+.
+The disadvantage, from what I have figured so far, is that this limits the number of setups, in particular the network fabric options.
+Flannel, a popular option for this, is preconfigured to use the default subnets.
+Until I can figure out if I can and how to adjust Flannel, I can't use it.
+
+
+With the Kubernetes controller now running, we can copy the config to a non-root account.
+I'm using the standard `ubuntu` account, which, as an admin account, is nearly not as good as a dedicated Kubernetes account, but it works for now.
+
+[source]
+----
+mkdir $HOME/.kube
+sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown ubuntu:ubuntu $HOME/.kube/config
+----
+
+NOTE: if you want to reset the actions of `kubeadm`, then use `kubeadm reset`.
+This also works on the nodes after joining the Kubernetes network.
+
+[TIP]
+====
+if you have `kubectl` installed on your local machine (desktop, laptop), you can copy the configuration file to your `$HOME/.kube/config` file there, and run all the kubectl commands from there: no need for sudo, no need to ssh into the controller!
+
+[source]
+----
+# From local machine
+scp controller:.kube/config ~/.kube/config
+----
+
+This assumes an entry like
+[source]
+----
+host controller
+  HostName 145.100.x.y
+  IdentityFile ~/.ssh/id_rsa
+  User ubuntu
+----
+in your `~/.ssh/config` file on your local machine.
+
+Ensure your control machine has proper access to your controller node, with regards to the firewall settings.
+The simplest way is to get its IP and on the controller, open the firewall for that machine:
+
+[source]
+sudo ufw allow from <control-machine-ip>
+
+or if you want to be more restrictive:
+[source]
+sudo ufw allow from <control-machine-ip> to any \
+    port 6443,2379,2380,10250,10251,10252
+====
+
+==== Hooking up the workers
+
+First, print the command necessary to join the controller (on your controller): this will contain some security tokens:
+
+[source]
+kubeadm token create  --print-join-command
+
+This will output a line like (no need for `sudo` here):
+[source]
+kubeadm join 145.100.x.y:6443 --token gmdirx.udxjw6amqtp2soq0 --discovery-token-ca-cert-hash sha256:6ee755599276cfd015eb005e395e0d26a6fccbabf30600f0ecb15f5675620634
+
+Copy this line, ssh into a worker, and execute this in the worker:
+
+[source]
+sudo kubeadm join 145.100.57.220:6443 --token dmgurz.udxjw5masft2soq0 --discovery-token-ca-cert-hash sha256:d015eb005e395e0d26a6fccbabf30600f0ecb15f56756206346ee755599276cf
+
+=== Calico
+
+Since I am using Calico for the pod network, I also need to enable port 179 (Border Gateway Protocol, bgp):
+[source]
+----
+sudo ufw allow proto tcp from 145.100.56.0/22 to any port 179
+sudo ufw status
+----
+
+Of course, Calico also needs to be installed.
+And the value of `CALICO_IPV4POOL_CIDR` in its configuration file needs to be changed to match the pod network used above.
+
+[source]
+----
+curl -O https://docs.projectcalico.org/v3.6/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+sed -i.bck 's#192\\.168\\.0\\.0/16#192.168.64.0/18#'  calico.yaml
+kubectl apply -f calico.yaml
+----
+
+(The comments in the calico.yaml mention `--cluster-cidr` instead of `--pod-network-cidr.
+This is because `kubeadm` is a front-end for other tools that use `--cluster-cidr`.
+If you explicitly want to see the `cluster-cidr`, use
+[source]
+kubectl cluster-info dump | grep cluster-cidr
+
+
+Now that Calico is installed and the workers are connected to the controller, you should be able to see the pods up and running (give it a minute before everything runs fully):
+
+[source]
+----
+$ kubectl get pods --all-namespaces --output wide
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE   IP                NODE         NOMINATED NODE   READINESS GATES
+kube-system   calico-kube-controllers-55df754b5d-rj687   1/1     Running   0          84m   192.168.75.2      node2        <none>           <none>
+kube-system   calico-node-cz5rw                          1/1     Running   0          84m   145.100.57.36     node1        <none>           <none>
+kube-system   calico-node-fcqwm                          1/1     Running   0          84m   145.100.57.38     node2        <none>           <none>
+kube-system   calico-node-jjjtp                          1/1     Running   0          84m   145.100.57.33     controller   <none>           <none>
+kube-system   coredns-86c58d9df4-6hj4w                   1/1     Running   0          84m   192.168.75.1      node2        <none>           <none>
+kube-system   coredns-86c58d9df4-m7hsg                   1/1     Running   0          84m   192.168.75.3      node2        <none>           <none>
+kube-system   etcd-controller                            1/1     Running   0          83m   145.100.57.33     controller   <none>           <none>
+kube-system   kube-apiserver-controller                  1/1     Running   0          83m   145.100.57.33     controller   <none>           <none>
+kube-system   kube-controller-manager-controller         1/1     Running   0          83m   145.100.57.33     controller   <none>           <none>
+kube-system   kube-proxy-9dckf                           1/1     Running   0          84m   145.100.57.38     node2        <none>           <none>
+kube-system   kube-proxy-v4dqg                           1/1     Running   0          84m   145.100.57.33     controller   <none>           <none>
+kube-system   kube-proxy-wbgff                           1/1     Running   0          84m   145.100.57.36     node1        <none>           <none>
+kube-system   kube-scheduler-controller                  1/1     Running   0          83m   145.100.57.33     controller   <none>           <none>
+----
+
+Note that they are all listed in the `kube-system` namespace, as they should.
+Hence I use the `--all-namespaces` flag (the short version is `-A`).
+I have also used the `--output wide` option (short: `-o`), to get some extra information about the pods, including their IP addresses.
+You'll notice a mix of internal (192.168.x.y) and external (145.100.57.z) addresses.
+The RESTARTS column is good to pay attention to if you notice a pod is not 1/1 READY: it there area lot of restarts in its uptime, that pod clearly has a problem.
+Try and use `kubectl logs <podname> [-n <namespace>]` for a debugging start.
+
+You can also list the available services:
+
+[source]
+----
+$ kubectl get svc -A
+NAMESPACE     NAME            TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+default       kubernetes      ClusterIP      192.168.0.1      <none>        443/TCP                      83m
+kube-system   kube-dns        ClusterIP      192.168.0.10     <none>        53/UDP,53/TCP                82m
+----
+
+== Storage space for pods
+
+We'll want some storage space for the Jupyter pods that will be running later.
+Ideally, this means using a storage space provided by the cloud setup, but since there is none, I'm using fixed storage.
+This is obviously not ideal, but works for our demonstration case.
+
+In Kubernetes, there is the concept of a `PersistentVolume` for providing storage.
+Here, I tie these persistent volumes to a directory on disk.
+The CEPH data disk is mounted at `/mnt/data`, with each node having one disk mounted.
+I made three directories, an identical one on each node (not necessary, for demonstration purposes), which ise the one for user storage, and another on node 2 other for JupyterHub's database.
+
+[source]
+----
+# on node1:
+sudo mkdir /mnt/data/pv-user
+# on node2:
+sudo mkdir /mnt/data/pv-user
+sudo mkdir /mnt/data/pv-hub
+----
+
+Note that node1 is the first worker, and node2 is the second worker.
+I am not using the controller for volumes, since pods are not running on the controller.
+Root access is fine, since you've started `kubeadm` as root as well.
+
+
+Now, create a `pv.yaml` file, as follows:
+
+[source]
+----
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-user
+  namespace: jhub
+  labels:
+    hub: jhub
+    type: hubdb
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: hub-user-storage
+  local:
+    path: /mnt/data/pv-user
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+          - node2
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-hub
+  namespace: jhub
+  labels:
+    hub: jhub
+    type: hubdb
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: hub-storage
+  local:
+    path: /mnt/data/pv-hub
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node2
+----
+
+The first part is for user storage, with a total allowed amount of 50 Gi (GibiByte, so a proper `50 x 2^30`).
+The second part is for the JupyterHub database, for a total of 5 Gi.
+The default JupyterHub database is SQLite, and simply requires a disk file, which is written into this space.
+
+Note the `nodeAffinity` section to match the `path` with the proper node; verify that this is corresponds with the directories you created before.
+
+Finally, there is the `storageClassName`, which will be used to match volumes by JupyterHub when running.
+
+Create the volumes in your cluster:
+
+[source]
+kubectl -f apply pv.yaml
+
+and check the result:
+[source]
+kubectl get pv
+
+
+For me, this results in something like
+
+[source]
+----
+NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS       REASON   AGE
+pv-hub    5Gi        RWO            Retain           Available                  hub-storage                 8m14s
+pv-user   50Gi       RWO            Retain           Available                  hub-user-storage            8m14s
+----
+
+Now, we also need to set up a standard `persistentVolumeClaim` for the user space.
+JupyterHub will take of the database part, but we need to help it for the user disk space.
+Perhaps important to note: by default, this is not necessary.
+But since there is no standard storage provided by the cloud, I do this all manually.
+Normally, you should not have to bother with this (then again, this *is* a bare-metal setup).
+
+The configuration file for the `persistentVolumeClaim`, `pvc.yaml`, looks as follows:
+[source]
+----
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jhub
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-user
+  namespace: jhub
+spec:
+  storageClassName: hub-user-storage
+  resources:
+    requests:
+      storage: 2Gi
+  accessModes:
+  - ReadWriteOnce
+  volumeName: "pv-user"
+----
+
+So each user will be allowed 2 Gi of storage.
+The claim is matched to the volume by the `volumeName`.
+
+For persistent volume claims, we need a namespace, matching that of the JupyterHub that we are going to install later.
+It's already used above, in `pv.yaml`, even though it doesn't serve an actual purpose there (persistent volumes appear to have no namespace affinity).
+Therefore, an extra configuration section to create the actual namespace where the claim will be installed, is added to the top of the file.
+
+Before creating this volume claim, we need to create the "jhub" namespace; Kubernetes will not automatically create a namespace for you:
+[source]
+kubectl create namespace jhub
+
+Note that later, we will use this namespace again when installing JupyterHub itself.
+
+Now create the claim:
+
+[source]
+kubectl apply -f pvc.yaml
+
+It will take a few seconds to a minute, but then you should see the claim to have found the volume, and the volume to be bound to a claim:
+
+[source]
+----
+$ kubectl get pv
+NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM           STORAGECLASS       REASON   AGE
+pv-hub    5Gi        RWO            Retain           Available                   hub-storage                 9m23s
+pv-user   50Gi       RWO            Retain           Bound       jhub/pvc-user   hub-user-storage            9m23s
+
+$ kubectl get pvc -n jhub
+NAMESPACE   NAME       STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS       AGE
+jhub        pvc-user   Bound    pv-user   50Gi       RWO            hub-user-storage   2m13s
+----
+
+Now that that is set up, let's take care of installing JupyterHub with Helm.
+
+
+== Setting up Helm and Tiller
+
+Helm and Tiller are the Kubernetes package manager: Helm works on the client side, Tiller on the server side.
+Since I run everything from my laptop (using the copied `~/.kube/config` file as per above), I have installed Helm there.
+On my Mac, that was simply `brew install helm`.
+There is also the https://helm.sh/docs/using_helm/#installing-helm[official installation guide].
+
+Once you have Helm installed (try `helm version`), make preparations for Tiller.
+We set up a service account for Tiller, and set the Role-based access control (RBAC) permissions (since we are using Kubernetes 1.13.5, RBAC is on by default):
+
+[source]
+----
+kubectl --namespace kube-system create serviceaccount tiller
+# Set RBAC permissions:
+kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+# Check with:
+kubectl get clusterrolebinding
+----
+
+Now we initialize Helm and set up Tiller in the cluster:
+
+[source]
+helm init --service-account tiller --wait
+
+Once done, we can see the Tiller pod running:
+[source]
+kubectl get pod -n kube-system -l name=tiller
+
+Finally, Helm and Tiller need to be secured properly:
+
+[source]
+kubectl patch deployment tiller-deploy --namespace=kube-system --type=json --patch='[{"op": "add", "path": "/spec/template/spec/containers/0/command", "value": ["/tiller", "--listen=localhost:44134"]}]'
+
+Check the version again, and see that Tiller shows up properly:
+[source]
+helm version
+
+== Installing JupyterHub
+
+Finally, we can install JupyterHub.
+First, of course, there needs to be configuration file set up, `jupyterhub-config.yaml`.
+This is mine:
+
+[source]
+----
+# Create random string with `openssl rand -hex 32`
+proxy:
+  secretToken: "<hex>"
+
+singleuser:
+  storage:
+    type: static
+    static:
+      pvcName: pvc-user
+      subpath: "home/{username}"
+    dynamic:
+      storageClassName: hub-user-storage
+
+hub:
+  db:
+    pvc:
+      storageClassName: hub-storage
+      storage: 5Gi
+      accessModes:
+      - ReadWriteOnce
+----
+
+The secretToken needs to be changed to the actual output of
+[source]
+openssl rand -hex 32
+
+For the single user storage, I have set the `type` to `static`.
+The default is `dynamic`, for which the `dynamic` section would be used (now, it actually serves no purpose, since it will be ignored).
+There is also the storage type of `none`, which means users will not have any permanent storage: between server (notebook) restarts, their data will not be saved.
+This is similar to what BinderHub uses, except there is no idle timeout configured here.
+The `static.pvcName` part matches the volume claim we set up earlier.
+
+The `hub.db.pvc` section relates to the SQLite database mentioned earlier.
+Here, the match is on the `storageClassName`; verify that this indeed matches the `storageClassName` set earlier for the `pv-hub`.
+
+Let's finally install JupyterHub:
+
+[source]
+----
+RELEASE=jhub
+NAMESPACE=jhub
+# 0.8.2 JupyterHub Helm chart = JupyterHub 0.9.6, and requires Kubernetes 1.11+, Helm 2.11.0+
+helm upgrade --install $RELEASE jupyterhub/jupyterhub \
+  --namespace $NAMESPACE  \
+  --version=0.8.2 \
+  --values jupyterhub-config.yaml
+----
+
+(Note that JupyterHub Helm charts version numbers are not the same as JupyterHub's version numbers.)
+
+Here, we also set the namespace, "jhub", that we already configured earlier for our persistent volume claims.
+
+If you have changed something in `jupyterhub-config.yaml`, apply the changes to the cluster with
+[source]
+helm upgrade -f updated-values.yml $RELEASE jupyterhub/jupyterhub
+
+
+NOTE: Although the JupyterHub configuration file is also a YAML file, it should not be used as normal Kubernetes YAML configuration files.
+`kubectl apply -f jupyterhub-config.yaml` will simply not work.
+When installing with `helm`, the installation will replace values in the actual Kubernetes configuration files with values provided in this file.
+Hence the use of `helm ... --values jupyterhub-config.yaml` here.
+And indeed, both for `kubectl` and `helm`, the `-f` option is short for `--values`.
+
+
+Check that JupyterHub is running:
+
+[source]
+----
+$ kubectl get service --namespace jhub
+NAME           TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+hub            ClusterIP      192.168.48.235   <none>        8081/TCP                     4h20m
+proxy-api      ClusterIP      192.168.48.152   <none>        8001/TCP                     4h20m
+proxy-public   LoadBalancer   192.168.50.38    <pending>     80:32612/TCP,443:32421/TCP   4h20m
+----
+
+You can also verify that JupyterHub has claimed the database volume we set up:
+
+[source]
+----
+$ kubectl get pvc -A
+NAMESPACE   NAME         STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS       AGE
+jhub        hub-db-dir   Bound    pv-hub    5Gi        RWO            hub-storage        2m33s
+jhub        pvc-user     Bound    pv-user   50Gi       RWO            hub-user-storage   5m54s
+
+$ kubectl get pv
+NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS       REASON   AGE
+pv-hub    5Gi        RWO            Retain           Bound    jhub/hub-db-dir   hub-storage                 10m
+pv-user   50Gi       RWO            Retain           Bound    jhub/pvc-user     hub-user-storage            10m
+----
+
+== Configuring Nginx as a reverse proxy
+
+You may notice that the external IP for the `proxy-public` remains pending, rather indefinitely.
+This is because there is no DHCP server inside the cloud we can hook into (there definitely is a server though, since our VMs all have an IP).
+Instead, we simply use Nginx on our controller to send incoming requests to the `proxy-public` service of JupyterHub, and vice-versa.
+
+That means Nginx needs to be installed on the controller first:
+
+[source]
+----
+ssh controller
+sudo apt install nginx
+sudo ufw allow http
+sudo ufw allow https
+----
+
+Find the cluster IP of the `proxy-public` service:
+[source]
+kubectl get svc -n jhub -lapp=jupyterhub,component=proxy-public -o=jsonpath="{.items[0]['spec']['clusterIP']}"
+
+Now, edit the `default` Nginx configuration file (you may want to use a separate file for this, but using the default one works well for demonstration purposes):
+
+- Near the top, *before* the `server { ... }` directive, add a few lines to define necessary WebSocket variables:
+
+[source]
+----
+# top-level http config for websocket headers
+# If Upgrade is defined, Connection = upgrade
+# If Upgrade is empty, Connection = close
+map $http_upgrade $connection_upgrade {
+     default upgrade;
+     ''      close;
+}
+----
+
+Then, inside the `server` directive, replace the contents of the `location / { .... }` part with:
+
+[source]
+----
+	location / {
+    		proxy_pass http://192.168.x.y:80;
+    		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    		proxy_set_header X-Forwarded-Proto $scheme;
+    		proxy_set_header Host $host;
+    		proxy_set_header X-Real-IP $remote_addr;
+
+ 			# websocket headers
+ 			proxy_set_header Upgrade $http_upgrade;
+ 			proxy_set_header Connection $connection_upgrade;
+	}
+----
+
+Replace the `192.168.x.y` with that of the internal IP of the `proxy-public` service found before.
+Don't forget to remove the (default) 404 line in this section as well.
+
+Restart and check, and you should be good to go, by opening a web browser at the IP address of your controller.
+Note that there is no https yet, so your browser may complain and refuse to open the webpage without manual intervention, since JupyterHub prefers https.
+
+== Trying it out
+
+Finally, we have a JupyterHub running on Kubernetes, with some work-arounds.
+Let's see if it works properly.
+Log in on the webpage with a random user name and no password.
+It takes a few seconds, but then your server should start and you'll see the notebook interface.
+Create a notebook and execute a few cells, and make sure to save it.
+
+Now, in *another* web browser, open the login page again.
+You need another web browser, because JupyterHub saves sessions in browser cookies.
+Alternatively, you can log out of your current notebook.
+Log in as a different user.
+Again, create a file (this time, a text file perhaps), add some text and save it.
+
+Finally, log out, close the tab or browser, and log in with the same user account: you should find the file still there.
+
+On the server side, let's look at the pods:
+
+[source]
+----
+kubectl get pods --output wide -n jhub
+NAME                     READY   STATUS    RESTARTS   AGE     IP                NODE    NOMINATED NODE   READINESS GATES
+hub-f889bc89c-ghtdh      1/1     Running   0          11m     192.168.75.23     node2   <none>           <none>
+jupyter-asdf             1/1     Running   0          2m59s   192.168.102.147   node1   <none>           <none>
+jupyter-qwer             1/1     Running   0          55s     192.168.75.24     node2   <none>           <none>
+proxy-845d789775-jq9fq   1/1     Running   0          11m     192.168.102.146   node1   <none>           <none>
+----
+
+I have been using a "asdf" and a "qwer" login (easy to type).
+Note the two newest pods (about three and one minute old) that are called "jupyter-{login}".
+Note also the the nodes on which these pods are running.
+Let's inspect the user directory made for the persistent volumes on these nodes:
+[source]
+----
+$ ssh node1 ls -F /mnt/data/pv-user
+asdf/
+$ ssh node2 ls -F /mnt/data/pv-user
+qwer/
+----
+
+If you peek inside those "asdf" and "qwer" folders, you'll find the exact files created in the notebook (plus a few bookkeeping files)!
+This is where your persistent storage lives, and why logging out is safe.
+Obviously, you can also look at the `pv-hub` directory (for me, at `node2:/mnt/data/pv-hub/`), which shows two files: `jupyterhub_cookie_secret` and `jupyterhub.sqlite`.
+You can even look in the SQLite database with a tool like `sqlite3`, but you obviously don't want to make any changes in it.
+
+If you quit a server in your Jupyter session, you'll see the pod disappear from the cluster (initially, it will have "Completed" status for a short time).
+Thanks to the naming scheme, however, once the same user logs in again, a new pod and server will be started up, but tied to the same storage (and the pod will, of course, have the same name again as well).
+
+== Final remarks
+
+This is the end of the lengthy guide of setting up JupyterHub on Kubernetes on a bare metal system.
+
+There is still more to do; I have put these items as a to-do list below.
+The most important one, is to scale the VM network depending on the load, by adding or removing VMs.
+These VMs should then join the Kubernetes automatically, and new pods will (also) be created there.
+Removing them when the load is low, to reduce the CPU hours used, may be more difficult, since (idle) pods would need to be removed from one node to the other nodes.
+
+There are also a few brief notes, often mentioned above in the text, about some issues I ran into.
+
+And finally, some pointers to resources (webpages) that I have found useful in my quest.
+
+=== To do
+
+- use virtual private cloud 10.x.y.z network, instead of public IPs
+- use different user for kubectl, instead of ubuntu admin account
+- try and use dynamic storage, instead of storage tied to node directories
+- connect permanent user home directories with the pods.
+This may overrule the previous point.
+(Underlying reason is that this allows ssh access if necessary, as well as local, for example PAM, authentication.)
+- verify that our Nginx - public-proxy is correct and good enough for our purposes
+-- See if there is an easier way to forward the public-proxy, since now it's set to a LoadBalancer with a public IP pending.
+- Scale VMs with load.
+See the remark before.
+- Manage certificates for https use.
+Some info at https://zero-to-jupyterhub.readthedocs.io/en/latest/security.html.
+
+
+=== Notes about potential issues
+
+- set envvar ANSIBLE_HOST_KEY_CHECKING to False (export ANSIBLE_HOST_KEY_CHECKING=False)
+- flannel apparently only allows for cidr 10.x.y.z; I'm using Calico instead
+- nodes should *not* have the same hostname. If you, however, use a cloud environment to instantiate a set of VMs, they may very well end up with the same hostname.
+- *all* nodes should have the kubernetes ports open (not just the controller). Perhaps 6443 is excepted from the worker nodes, since they connect to the controller on that port.
+- debug connection/dns issues with busybox: https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
+- Calico needs port 179 open, for BGP protocol. Found by looking in the nodes' ufw logs.
+- https://github.com/kubernetes/ingress-nginx is the Kubernetes community managed Nginx ingress. Not the ones managed by the Nginx company.
+- Use `kubeadm reset` to clean up after `kubeadm init` or `kubeadm join`.
+
+
+
+== Resources
+
+I only list the resources that make sense to start reading from their entry point.
+For example, the documentation for Kubernetes itself is not listed (https://kubernetes.io/docs/home/), since that is a huge amount of documentation, and most of the time, you would be guided to a subsection from a search result.
+On the other hand, the Zero to JupyterHub guide can actually be read from the start, since it has good subsection pointers.
+
+- https://cilium.io/blog/2018/09/26/bionic-beaver/
+- https://www.digitalocean.com/community/tutorials/how-to-create-a-kubernetes-1-11-cluster-using-kubeadm-on-ubuntu-18-04
+- https://zero-to-jupyterhub.readthedocs.io/en/latest/index.html
+- https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-ingress-guide-nginx-example.html
+- https://zonca.github.io/2017/12/scalable-jupyterhub-kubernetes-jetstream.html
+- https://github.com/data-8/kubeadm-bootstrap

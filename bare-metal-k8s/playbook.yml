@@ -1,0 +1,273 @@
+# Set the envvar ANSIBLE_HOST_KEY_CHECKING to False
+#
+# Following https://cilium.io/blog/2018/09/26/bionic-beaver/
+# Also using https://www.digitalocean.com/community/tutorials/how-to-create-a-kubernetes-1-11-cluster-using-kubeadm-on-ubuntu-18-04
+
+---
+
+- hosts: all
+  vars_files: intnet_vars.yml
+
+#  remote_user: ubuntu
+#  become: true
+
+  tasks:
+  # Stop-gap solution for the issue that the Ubuntu VM appears to  automatically
+  # upgrades packages upon first login, thus preventing running this playbook, that is,
+  # apt update, on a completely new VM.
+  - name: Wait for automatic system updates
+    shell: while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do sleep 1; done;
+  - name: Wait for automatic system updates part 2
+    shell: while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 1; done;
+
+  - name: Update apt and install basic utility packages needed by Ansible
+    apt:
+      # gpg is necessary to add repository GPG keys
+      # dbus is necessary so that ansible can change the hostname: https://github.com/ansible/ansible/issues/25543
+      #name: [emacs, zsh, curl, wget, screen, tmux, net-tools, ufw, whois, git, htop, coreutils, build-essential, dbus]
+      name: [dbus, gpg]
+
+# We don't need apt-transport-https on Bionic Beaver, since apt is version 1.6,
+# and https is included in apt since version 1.5
+# See also https://whydoesaptnotusehttps.com/
+  - name: APT's transport https
+    apt:
+      name: [apt-transport-https]
+      autoremove: yes
+    when: false
+
+  - include: mount_storage.yml
+
+  - include: docker.yml
+
+  - include: kubernetes.yml
+
+  - name: turn swap off
+    command: swapoff -a
+
+  - name: comment out swap
+    replace:
+      path: /etc/fstab
+      regexp: '^/swapfile'
+      replace: '#/swapfile'
+
+  - name: comment out swap 2
+    replace:
+      path: /etc/fstab
+      regexp: '^([^#].*\sswap\s.*)$'
+      replace: '#\1'
+
+  - name: enable Docker
+    systemd:
+      name: docker
+      enabled: yes
+      state: stopped
+
+  - name:
+    copy:
+      src: /lib/systemd/system/docker.service
+      dest: /etc/systemd/system/docker.service
+      remote_src: yes
+
+  # Update this per Kubernetes guide
+  # Note that the comments in the default docker.service read
+  # contrary, and suggest systemd does not properly support docker
+  - name: Update Docker service
+    replace:
+      path: /etc/systemd/system/docker.service
+      regexp: '^ExecStart=/usr/bin/dockerd -H fd://$'
+      replace: 'ExecStart=/usr/bin/dockerd -H fd:// --exec-opt native.cgroupdriver=systemd'
+
+
+  - name: start Docker
+    systemd:
+      daemon_reload: yes
+      name: docker
+      enabled: yes
+      state: started
+
+  # Open UFW ports
+  - name: Open udp ports for weave
+    ufw:
+      rule: allow
+      from_ip: "{{ item }}"
+      to_port: 6783,6784
+      proto: udp
+    when: false
+    loop: "{{ extnet.subnets }}"
+
+  - name: Open tcp ports for weave
+    ufw:
+      rule: allow
+      from_ip: "{{ item }}"
+      to_port: 6783
+      proto: tcp
+    when: false
+    loop: "{{ extnet.subnets }}"
+
+  - name: Open tcp ports for BGP for Calico
+    ufw:
+      rule: allow
+      from_ip: "{{ item }}"
+      to_port: 179
+      proto: tcp
+    when: true
+    loop: "{{ extnet.subnets }}"
+
+- hosts: controller
+  vars_files: intnet_vars.yml
+
+  tasks:
+
+  - name: update hostname & /etc/hosts
+    block:
+      - hostname:
+          name: controller
+
+      - replace:
+          path: /etc/hosts
+          regexp: '^127\.0\.1\.1.+(packer\-Ubuntu\-\d+)$'
+          replace: '127.0.1.1       \1-Server    controller'
+
+      - replace:
+          path: /etc/hosts
+          regexp: '^127\.0\.0\.1\s+packer\-Ubuntu\-\d+$'
+          replace: '127.0.0.1 controller'
+
+  # Open UFW
+  # See https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
+  - name: allow access to K8S controller and etcd server
+    ufw:
+      rule: allow
+      to_port: '{{ item.0 }}'
+      from_ip: '{{ item.1 }}'
+    loop: "{{ [6443, 2379, 2380, 10250, 10251, 10252] | product(extnet.subnets) | list }}"
+
+  - name: allow control from a remote client
+    ufw:
+      rule: allow
+      from_ip: "{{ item }}"
+    loop:
+      "{{ control_client_ips }}"
+    when: control_client_ips is defined
+
+  - name: Initialize cluster
+    shell: "kubeadm init --pod-network-cidr {{ intnet.podcidr }} --service-cidr {{ intnet.servicecidr }} >> {{ HOME }}/kubeadm_init.txt"
+    args:
+      creates: "{{ HOME }}/kubeadm_init.txt"
+
+  - name: Create .kube directory
+    file:
+      path: "{{ HOME }}/.kube"
+      state: directory
+      owner: ubuntu
+      group: ubuntu
+
+  - name: Copy cluster configuration
+    copy:
+      src: /etc/kubernetes/admin.conf
+      dest: "{{ HOME }}/.kube/config"
+      remote_src: yes
+      owner: ubuntu
+      group: ubuntu
+
+  - name: Get Calico template
+    get_url:
+      url: https://docs.projectcalico.org/v3.6/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+      dest: "{{ HOME }}/calico.yaml"
+      owner: ubuntu
+      group: ubuntu
+      mode: 0644
+
+  - name: Update Calico template
+    replace:
+      path: "{{ HOME }}/calico.yaml"
+      regexp: '192\.168\.0\.0/16'
+      replace: "{{ intnet.podcidr }}"
+      owner: ubuntu
+      group: ubuntu
+      mode: 0644
+
+  - name: install Pod network
+    shell: "kubectl apply -f {{ HOME }}/calico.yaml >> {{ HOME }}/pod_network_setup.txt"
+    #shell: 'kubectl apply -f https://docs.projectcalico.org/v3.6/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml >> {{ HOME }}/pod_network_setup.txt'
+    #shell: 'kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> {{ HOME }}/pod_network_setup.txt'
+    #shell: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')" >> "{{ HOME }}/pod_network_setup.txt"
+    become: yes
+    become_user: ubuntu
+    args:
+      creates: "{{ HOME }}/pod_network_setup.txt"
+
+  - name: get discovery token & join command
+    shell : kubeadm token create  --print-join-command | tail -n1
+    become: yes
+    become_user: ubuntu
+    register: k8s_join_command
+
+  - name: save join command
+    set_fact:
+      join_command: "{{ k8s_join_command.stdout }}"
+
+
+
+- hosts: workers
+  vars_files: intnet_vars.yml
+
+  tasks:
+
+  # Open UFW
+  # See https://kubernetes.io/docs/setup/independent/install-kubeadm/#check-required-ports
+  - name: allow access to K8S worker
+    ufw:
+      rule: allow
+      from_ip: '{{ item }}'
+      to_port: 10250
+    loop: "{{ extnet.subnets }}"
+
+  - name: allow NodePort services
+    ufw:
+      rule: allow
+      from_ip: '{{ item }}'
+      to_port: 30000:32767
+      proto: tcp
+    loop: "{{ extnet.subnets }}"
+
+  - block: # update hostname & /etc/hosts
+    - hostname: name="{{ inventory_hostname }}"
+    - replace:
+        path: /etc/hosts
+        regexp: '^127\.0\.1\.1.+(packer\-Ubuntu\-\d+)$'
+        replace: '127.0.1.1       \1-Server    {{inventory_hostname}}'
+
+    - replace:
+        path: /etc/hosts
+        regexp: '^127\.0\.0\.1\s+(packer\-Ubuntu\-\d+)$'
+        replace: '127.0.0.1 k{{inventory_hostname}}'
+
+  - name: join controller
+    shell: "{{ hostvars['node0']['join_command'] }} >> joined_controller.txt"
+    args:
+      creates: joined_controller.txt
+
+  - name: Create persistent volume local storage points
+    file:
+      path: "/mnt/data/pv-user"
+      state: directory
+
+# The following section is meant for post JupyterHub install, but can be installed beforehand
+
+- hosts: controller
+
+  tasks:
+
+  - name: Set up Nginx. It'll be used as a reverse-proxy for JupyterHub's proxy-public
+    apt:
+      name: [nginx]
+      state: present
+
+  - name: Open up http and https ports on the controller
+    ufw:
+      rule: allow
+      to_port: "{{ item }}"
+      proto: tcp
+    loop: [http, https]

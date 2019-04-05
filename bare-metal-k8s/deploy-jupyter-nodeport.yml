@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter-notebook
+  labels:
+    app: jupyter-notebook
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: jupyter-notebook
+  template:
+    metadata:
+      labels:
+        app: jupyter-notebook
+    spec:
+      containers:
+      - name: minimal-notebook
+        image: jupyter/minimal-notebook:latest
+        ports:
+        - containerPort: 8888
+#---
+#kind: Service
+#apiVersion: v1
+#metadata:
+#  name: minimal-notebook
+#spec:
+#  type: NodePort
+#  ports:
+#    - port: 8888
+#      targetPort: 8888
+#      nodePort: 30000
+#  selector:
+#    app: jupyter-notebook
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: hello-world-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: aks-helloworld
+          servicePort: 80

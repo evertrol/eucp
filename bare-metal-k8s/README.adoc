@@ -1,0 +1,6 @@
+This is an initial attempt at a recipe to set up Kubernetes on a bare-metal system of virtual machines.
+That is to say, Kubernetes has to be installed and set running, no local DHCP server is available for handing out an IP address to the Kubernetes cluster, and no volumes are provided by the cloud system that the virtual machines run in.
+
+The setup is mainly provided by an Ansible playbook, with additional Python scripts to start up the virtual machines, and shell scripts to run the necessary Kubernetes commands (as well as setting up the JupyterHub on Kubernetes as the last step).
+
+Extensive details can be found in the link:kubernetes-jupyterhub-on-bare-metal.adoc[Kubernetes and JupyterHub on bare-metal] document.

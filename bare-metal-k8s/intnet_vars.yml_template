@@ -1,0 +1,6 @@
+intnet:
+  # change to 10.96.0.0/16 or /12 or to your liking
+  subnet: 192.168.100.0/16
+  controller: 192.168.100.1
+extnet:
+  subnet: xyz.xyz.xyz.xyz/ww
