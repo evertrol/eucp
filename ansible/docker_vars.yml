@@ -1,3 +1,4 @@
 #docker_image: jupyter/datascience-notebook:45b8529a6bfc
 #docker_image: evertrol/eucp-notebook:64de3f568873
-docker_image: evertrol/eucp-notebook:53286a2e9791
+#docker_image: evertrol/eucp-notebook:53286a2e9791
+docker_image: evertrol/eucp-notebook:40e99d7fee5b
