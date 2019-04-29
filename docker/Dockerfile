@@ -11,6 +11,10 @@ USER root
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
+    csh \
+	tcsh \
+	zsh \
+	htop \
     grads \
     cdo \
     gfortran-8 \
@@ -63,9 +67,17 @@ RUN conda install --quiet --yes --channel conda-forge --override-channels \
     'xarray' \
     'boost' \
     'gdal' \
+	'ncl' \
+	'pyngl' \
+	'pynio' \
  && conda clean -tipsy && \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
+
+RUN pip install jupyterlab_thredds
+RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
+RUN jupyter labextension install jupyter-leaflet
+RUN jupyter labextension install @ewatercycle/jupyterlab_thredds
 
 
 ENV PATH=${PATH}:${PCRASTER_DIR}/bin
