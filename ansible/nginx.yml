@@ -3,7 +3,7 @@
 
 - name: Install nginx
   apt:
-    name: [nginx]
+    name: [nginx, libnginx-mod-http-auth-pam]
 
 - name: Generate Diffie Hellman parameters; takes a few minutes
   shell: openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096
@@ -21,3 +21,6 @@
     src: /etc/nginx/sites-available/jupyterhub.conf
     dest: /etc/nginx/sites-enabled/jupyterhub.conf
     state: link
+
+- name: Add www-data to shadow, to be able to read the password file for PAM authentication
+  shell: usermod -a -G shadow www-data
