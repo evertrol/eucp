@@ -16,6 +16,6 @@
 #   # THREDDS server with ssl, but for internal use only
 #   - ufw:
 #       rule: allow
-#       from: 145.100.59.0/24
+#       from: 145.100.56.0/22
 #       to_port: 8088
-#ufw allow from 145.100.59.0/24 to any port 8088
+#ufw allow from 145.100.56.0/22 to any port 8088

@@ -61,7 +61,17 @@
 - name: allow ftp through the firewall
   ufw:
     rule: allow
-    port: ftp
+    proto: tcp
+    port: '{{ item }}'
+  with_items: [20, 21]
+
+- name: set ftp passive range
+  ufw:
+    rule: allow
+    proto: tcp
+    port: '{{ item }}'
+  with_items: [10090, 10091, 10092, 10093, 10094, 10095,
+               10096, 10097, 10098, 10099, 10100]
 
 # Stop vsftpd service before making changes
 - name: Start vsftpd service
