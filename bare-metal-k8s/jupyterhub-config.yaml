@@ -1,0 +1,27 @@
+# Create random string with `openssl rand -hex 32`
+proxy:
+  secretToken: "271f953d1e4b770fb117c57ee76a061233f7f491b2fafef391c55f0b657ec5b8"
+
+# Try and use the Ingress service
+#ingress:
+#  enabled: true
+#  hosts:
+#    - controller.eucp-nlesc.surf-hosted.nl
+
+singleuser:
+  storage:
+    type: static
+    #capacity: 2Gi
+    static:
+      pvcName: pvc-user
+      subpath: "home/{username}"
+    dynamic:
+      storageClassName: hub-user-storage
+
+hub:
+  db:
+    pvc:
+      storageClassName: hub-storage
+      storage: 5Gi
+      accessModes:
+      - ReadWriteOnce

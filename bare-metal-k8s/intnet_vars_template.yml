@@ -1,0 +1,15 @@
+intnet:
+  # change to 10.96.0.0/16 or /12 or to your liking
+  podcidr: 192.168.64.0/18
+  servicecidr: 192.168.0.0/18
+  controller: 192.168.100.1
+extnet:
+  subnet: xyz.xyz.xyz.xyz/ww
+  subnets:
+  - xyz.xyz.xyz.xyz/ww
+  - def.def.def.def/gg
+
+control_client_ips:  # your local machine
+  - abc.acb.bac.cab
+
+HOME: /home/ubuntu

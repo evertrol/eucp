@@ -1,0 +1,27 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: jupyter-http
+spec:
+  selector:
+    app: jupyter-app
+  type: NodePort
+  ports:
+  - protocol: TCP
+    targetPort: 8888
+    port: 8888
+    nodePort: 30040
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: jupyter-notebook-ingress
+spec:
+  rules:
+  - host: kcontroller.eucp-nlesc.surf-hosted.nl
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: jupyter-notebook
+          servicePort: 8888

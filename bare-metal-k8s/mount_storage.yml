@@ -1,0 +1,26 @@
+- name: Make and mount file systems in the /mnt/data directory
+  block:
+  - file:
+      path: "/mnt/data"
+      state: directory
+  - filesystem:
+      device: "/dev/vdb"
+      fstype: xfs
+  - mount:
+      path: "/mnt/data"
+      src: "/dev/vdb"
+      state: mounted
+      fstype: xfs
+
+- name: Optimize the data disks somewhat
+  block:
+    - file:
+        path: /etc/rc.d
+        state: directory
+    - file:
+        path: /etc/rc.d/rc.local
+        state: touch
+        mode: 0755
+    - lineinfile:
+        path: /etc/rc.d/rc.local
+        line: "echo 4096 > /sys/block/vdb/queue/read_ahead_kb"

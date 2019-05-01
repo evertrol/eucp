@@ -1,0 +1,72 @@
+Set up a cluster (this uses the OpenNebula API through a Python interface):
+$ python3 create-new-cluster.py
+
+# Update intnet_vars.yml, to include the correct control machine IP for the firewall on the controller
+Run the Ansible playbook to install the necessary software on the nodes, and open the necessary ports in the firewall.
+$ export ANSIBLE_HOST_KEY_CHECKING=False
+$ ansible-playbook -i hosts.ini --become --user ubuntu playbook.yml -vv
+
+# Copy the kube config to the local machine:
+scp knode0:.kube/config ~/.kube/config
+
+# Install Helm & Tiller: helm-tiller-installation.txt
+bash helm-tiller-install.sh
+
+# Create some data dirs persistentvolumes as storage for pods:
+ssh knode2 sudo mkdir /mnt/data/pv-hub
+# Note: /mnt/data/pv-user created in the ansible playbook
+#kubectl create namespace jhub
+kubectl apply -f storage.yaml
+
+
+# Create and adjust JupyterHub configuration file: jupyterhub-config.yaml
+# Install JupyterHub via Helm: helm-jupyterhub-install.txt
+bash helm-jupyterhub-install.sh
+
+
+# Find the internal IP JupyterHub's proxy-public
+pp_internalIP=$(kubectl get svc -n jhub -lapp=jupyterhub,component=proxy-public -o=jsonpath="{.items[0]['spec']['clusterIP']}")
+
+# Substitue this IP into the Nginx default template, copy it over, and restart nginx
+sed "s/\${pp_internalIP}/${pp_internalIP}/" nginx_default_template > nginx_default
+scp nginx_default knode0:/tmp/nginx_default
+ssh knode0 sudo cp /tmp/nginx_default /etc/nginx/sites-available/default
+ssh knode0 sudo systemctl restart nginx
+
+----
+
+Let JHub run it's proxy-public, and install and use Nginx on a node to proxy that to a public IP/dns name
+
+Find the internal IP of the proxy-public:
+
+In /etc/nginx/sites-available/default:
+- change the internal IP address accordingly, to that of the proxy-public service
+- handle websockets
+
+Above the server { ... } directive:
+
+# top-level http config for websocket headers
+# If Upgrade is defined, Connection = upgrade
+# If Upgrade is empty, Connection = close
+map $http_upgrade $connection_upgrade {
+     default upgrade;
+     ''      close;
+}
+
+Then, change the location / { ... } directive to
+
+	location  / {
+	proxy_pass         http://${pp_internalIP}:80;
+ 	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+ 	proxy_set_header X-Forwarded-Proto $scheme;
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+
+    # websocket headers
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+
+}
+
+# Restart nginx on the controller
+# Note: if the websocket settings are not there, you'd get a "connecting to kernel" message in the notebook, and a time-out message in the nginx error logs.
