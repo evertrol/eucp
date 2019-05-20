@@ -20,20 +20,19 @@ RUN apt-get update \
     ncl-ncarg \
 ##    gfortran-8 \
     cmake \
-	gcc \
-	g++ \
-	git \
-	qtbase5-dev \
-	libncurses5-dev \
-	libqwt-qt5-dev \
-	libqt5opengl5-dev \
-	libxerces-c-dev \
-	libboost-all-dev \
-	libgdal-dev \
-	python3-numpy \
-	python3-docopt \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+    libgl1-mesa-dev \
+##  qtdeclaratives5-dev
+    qtbase5-dev \
+    libncurses5-dev \
+    libqwt-qt5-dev \
+    libqt5opengl5-dev \
+##    libxerces-c-dev \
+    libboost-all-dev \
+    libgdal-dev \
+    python3-numpy \
+    python3-docopt \
+ && apt-get clean
+
 
 RUN mkdir -p $PCRASTER_DIR \
  && chown $NB_UID $PCRASTER_DIR \
