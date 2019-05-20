@@ -83,4 +83,4 @@ RUN jupyter labextension install @ewatercycle/jupyterlab_thredds
 
 
 ENV PATH=${PATH}:${PCRASTER_DIR}/bin
-ENV PYTHONPATH=${PCRASTER_DIR}/python
+ENV PYTHONPATH=${PYTHONPATH}:${PCRASTER_DIR}/python
