@@ -1,0 +1,28 @@
+# Open UFW ports
+
+- name: Open udp ports for weave
+  ufw:
+    rule: allow
+    from_ip: "{{ item }}"
+    to_port: 6783,6784
+    proto: udp
+  when: false
+  loop: "{{ extnet.subnets }}"
+
+- name: Open tcp ports for weave
+  ufw:
+    rule: allow
+    from_ip: "{{ item }}"
+    to_port: 6783
+    proto: tcp
+  when: false
+  loop: "{{ extnet.subnets }}"
+
+- name: Open tcp ports for BGP for Calico
+  ufw:
+    rule: allow
+    from_ip: "{{ item }}"
+    to_port: 179
+    proto: tcp
+  when: true
+  loop: "{{ extnet.subnets }}"

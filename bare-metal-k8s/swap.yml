@@ -1,0 +1,8 @@
+- name: turn swap off
+  command: swapoff -a
+
+- name: comment out swap partition (file or directory)
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\sswap\s.*)$'
+    replace: '#\1'
