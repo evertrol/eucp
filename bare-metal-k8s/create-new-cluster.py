@@ -80,7 +80,10 @@ def update_ssh_config(nodes):
             for line in fp:
                 if 'knode' in line:
                     inode = int(line[10:])
-                    ip = nodes[inode]['ip']
+                    try:
+                        ip = nodes[inode]['ip']
+                    except IndexError:
+                        ip = None
                 elif ip and 'HostName' in line:
                     line = f"  HostName = {ip}\n"
                     ip = None
