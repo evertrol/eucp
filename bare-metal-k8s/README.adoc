@@ -3,4 +3,6 @@ That is to say, Kubernetes has to be installed and set running, no local DHCP se
 
 The setup is mainly provided by an Ansible playbook, with additional Python scripts to start up the virtual machines, and shell scripts to run the necessary Kubernetes commands (as well as setting up the JupyterHub on Kubernetes as the last step).
 
+The Ansible playbook is kept simple on purpose: it is tied to a specific architecture (SURFSara HPC Cloud and an Ubuntu VM), and various versions and system choices are fixed.
+
 Extensive details can be found in the link:kubernetes-jupyterhub-on-bare-metal.adoc[Kubernetes and JupyterHub on bare-metal] document.
