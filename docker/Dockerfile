@@ -59,6 +59,7 @@ USER $NB_UID
 # Notes:
 # - grads is not available under Conda
 # - installing ncl under Conda messes up the notebook; for example, the R kernel disappears from the menu
+# - Downgrade Matplotlib to 2.2 for Iris
 # - pyngl and pynio have incompatible dependencies with some other packages
 RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --channel pcmdi/label/nightly --override-channels \
     'ipyleaflet' \
@@ -80,6 +81,8 @@ RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --ch
 	'eofs' \
     'esmvalcore' \
 	'cmor' \
+    'matplotlib=2.2' \
+    'python=3.7' \
 
 RUN pip install jupyterlab_thredds
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
