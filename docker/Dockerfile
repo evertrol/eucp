@@ -1,6 +1,6 @@
 # Docker notebook for climate analysis - European Climate Prediction project
 
-FROM jupyter/datascience-notebook:45b8529a6bfc
+FROM jupyter/datascience-notebook:7a3e968dd212
 
 LABEL maintainer="EUCP-NLESC <e.rol@esciencecenter.nl>"
 
@@ -21,7 +21,10 @@ RUN apt-get update \
 ##    gfortran-8 \
     cmake \
     libgl1-mesa-dev \
-##  qtdeclaratives5-dev
+##    qtdeclaratives5-dev
+    gcc \
+    g++ \
+    git \
     qtbase5-dev \
     libncurses5-dev \
     libqwt-qt5-dev \
@@ -31,8 +34,8 @@ RUN apt-get update \
     libgdal-dev \
     python3-numpy \
     python3-docopt \
- && apt-get clean
-
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p $PCRASTER_DIR \
  && chown $NB_UID $PCRASTER_DIR \
@@ -71,10 +74,14 @@ RUN conda install --quiet --yes --channel conda-forge --override-channels \
     'boost' \
     'gdal' \
     'cdo' \
+    'ncl' \
+    'pyngl' \
     'pynio' \
- && conda clean -tipsy \
- && fix-permissions $CONDA_DIR \
- && fix-permissions /home/$NB_USER
+    'cdms2` \
+ && conda clean -tipsy && \
+    fix-permissions $CONDA_DIR && \
+    fix-permissions /home/$NB_USER
+>>>>>>> Stashed changes
 
 RUN pip install jupyterlab_thredds
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
