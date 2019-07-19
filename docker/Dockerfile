@@ -59,7 +59,7 @@ USER $NB_UID
 # Notes:
 # - grads is not available under Conda
 # - installing ncl under Conda messes up the notebook; for example, the R kernel disappears from the menu
-RUN conda install --quiet --yes --channel conda-forge --override-channels \
+RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --channel pcmdi/label/nightly --override-channels \
     'ipyleaflet' \
     'ipywidgets' \
     'iris' \
