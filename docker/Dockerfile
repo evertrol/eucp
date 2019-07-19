@@ -92,7 +92,7 @@ RUN pip install cdo
 RUN pip install jupyterlab_thredds
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 RUN jupyter labextension install jupyter-leaflet
-RUN jupyter labextension install @ewatercycle/jupyterlab_thredds
+#RUN jupyter labextension install @ewatercycle/jupyterlab_thredds
 
 
 ENV PATH=${PATH}:${PCRASTER_DIR}/bin
