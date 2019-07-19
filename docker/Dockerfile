@@ -11,7 +11,6 @@ USER root
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-    csh \
     tcsh \
     zsh \
     less \
@@ -54,6 +53,7 @@ RUN cd /tmp \
  && make install
 RUN rm -r /tmp/pcraster*
 
+
 USER $NB_UID
 
 # Notes:
@@ -65,8 +65,8 @@ RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --ch
     'ipyleaflet' \
     'ipywidgets' \
     'iris' \
-    'nc-time-axis' \
     'iris-sample-data' \
+    'nc-time-axis' \
     'h5py' \
     'netcdf4' \
     'pyproj' \
@@ -83,6 +83,9 @@ RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --ch
 	'cmor' \
     'matplotlib=2.2' \
     'python=3.7' \
+ && conda clean -tipsy \
+ && fix-permissions $CONDA_DIR \
+ && fix-permissions /home/$NB_USER
 
 # For some reason, Conda's cdo does not appear to include the Python
 # interface, so it's installed through pip
