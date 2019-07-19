@@ -25,9 +25,9 @@ from jupyter_client.localinterfaces import public_ips
 c.JupyterHub.hub_ip = public_ips()[0]
 
 # The following three settings are used when running JupyterHub by itself, without a proxy
-#c.JupyterHub.bind_url = 'https://{{ servername }}:8088'
-#c.JupyterHub.ssl_key = '/etc/letsencrypt/live/{{ servername }}/privkey1.pem'
-#c.JupyterHub.ssl_cert = '/etc/letsencrypt/live/{{ servername }}/fullchain1.pem'
+#c.JupyterHub.bind_url = 'http://server.eucp-nlesc.surf-hosted.nl:8088'
+#c.JupyterHub.ssl_key = '/etc/letsencrypt/live/server.eucp-nlesc.surf-hosted.nl-0001/privkey.pem'
+#c.JupyterHub.ssl_cert = '/etc/letsencrypt/live/server.eucp-nlesc.surf-hosted.nl-0001/fullchain.pem'
 
 # Uncomment the following three debug settings when debugging
 #c.Application.log_level = 'DEBUG'
