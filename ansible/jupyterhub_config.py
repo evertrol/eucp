@@ -36,3 +36,7 @@ c.JupyterHub.hub_ip = public_ips()[0]
 
 # Set the following to True when debugging and testing new images
 #c.DockerSpawner.remove = True
+
+c.Spawner.http_timeout = 120
+c.Spawner.start_timeout = 120
+
