@@ -84,6 +84,11 @@ RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --ch
     'matplotlib=2.2' \
     'python=3.7' \
 
+# For some reason, Conda's cdo does not appear to include the Python
+# interface, so it's installed through pip
+RUN pip install cdo
+
+
 RUN pip install jupyterlab_thredds
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 RUN jupyter labextension install jupyter-leaflet
