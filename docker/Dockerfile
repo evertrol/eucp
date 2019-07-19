@@ -59,6 +59,7 @@ USER $NB_UID
 # Notes:
 # - grads is not available under Conda
 # - installing ncl under Conda messes up the notebook; for example, the R kernel disappears from the menu
+# - pyngl and pynio have incompatible dependencies with some other packages
 RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --channel pcmdi/label/nightly --override-channels \
     'ipyleaflet' \
     'ipywidgets' \
@@ -74,14 +75,11 @@ RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --ch
     'boost' \
     'gdal' \
     'cdo' \
-    'ncl' \
-    'pyngl' \
-    'pynio' \
-    'cdms2` \
- && conda clean -tipsy && \
-    fix-permissions $CONDA_DIR && \
-    fix-permissions /home/$NB_USER
->>>>>>> Stashed changes
+	'nco' \
+    'cdms2' \
+	'eofs' \
+    'esmvalcore' \
+	'cmor' \
 
 RUN pip install jupyterlab_thredds
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
