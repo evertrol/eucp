@@ -26,6 +26,10 @@
       msg: "{{ item.user }}  {{ item.group }}  {{ randompass.stdout }}"
   when: usersdir.stat.exists
 
+- name: Add workpackage groups
+  group:
+    name: "{{ item }}"
+  loop: [wp1, wp2, wp3, wp4, wp5, wp6, wp7]
 
 # Add a group and user later on, with fixed group id and user id:
 # groupadd -g 1005 <groupname>
