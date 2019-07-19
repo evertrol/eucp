@@ -40,3 +40,7 @@ c.JupyterHub.hub_ip = public_ips()[0]
 c.Spawner.http_timeout = 120
 c.Spawner.start_timeout = 120
 
+## Paths to search for jinja templates, before using the default templates.
+c.JupyterHub.template_paths = ['/etc/jupyterhub/templates']
+c.JupyterHub.template_vars = {'logo_url': '/hub/static/images/logo-eucp.png',
+                              'eucp_url': 'https://www.eucp-project.eu' }
