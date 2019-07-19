@@ -44,3 +44,5 @@ c.Spawner.start_timeout = 120
 c.JupyterHub.template_paths = ['/etc/jupyterhub/templates']
 c.JupyterHub.template_vars = {'logo_url': '/hub/static/images/logo-eucp.png',
                               'eucp_url': 'https://www.eucp-project.eu' }
+
+c.Authenticator.delete_invalid_users = True
