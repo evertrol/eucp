@@ -10,10 +10,9 @@
     filename: docker
     update_cache: yes
 
-# Can't install a later version with Kubernetes 13.5
 - name: Install Docker
   apt:
-    name: [docker-ce=18.06.3~ce~3-0~ubuntu]
+    name: [docker-ce]
 
 - name: Stop Docker service
   systemd:
