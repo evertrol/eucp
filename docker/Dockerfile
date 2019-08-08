@@ -110,3 +110,5 @@ RUN jupyter labextension install jupyter-leaflet
 
 ENV PATH=${PATH}:${PCRASTER_DIR}/bin
 ENV PYTHONPATH=${PYTHONPATH}:${PCRASTER_DIR}/python
+# set path explicitly, because otherwise cfunits can't be imported
+ENV UDUNITS2_XML_PATH=/opt/conda/share/udunits/udunits2.xml
