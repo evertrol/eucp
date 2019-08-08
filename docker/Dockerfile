@@ -77,11 +77,14 @@ RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --ch
     'boost' \
     'gdal' \
     'cdo' \
-	'nco' \
+    'nco' \
     'cdms2' \
-	'eofs' \
+    'eofs' \
+    'esmpy' \
     'esmvalcore' \
-	'cmor' \
+    'cmor' \
+    # Matplotlib version 2 for Iris (Iris wants to be
+    # Python 2 backwards compatible; Matplotlib 3 is Python-3 only)
     'matplotlib=2.2' \
     'python=3.7' \
  && conda clean -tipsy \
