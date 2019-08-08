@@ -8,9 +8,14 @@ python3 create-new-cluster.py 3
 # Give the cluster machines some time to really get started and update themselves
 sleep 15
 
-# Update intnet_vars.yml, to include the correct control machine IP for the firewall on the controller
+# Get the Ip of the client machine (the controller)
+# On MacOS:
 clientip=$(ipconfig getifaddr en0)
+# On Linux:
+#clientip=$(ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+# Update intnet_vars.yml, to include the correct control machine IP for the firewall on the controller
 sed "s/\${clientip}/${clientip}/" intnet_vars_local.yml > intnet_vars.yml
+
 
 # Run the Ansible playbook to install the necessary software on the nodes, and open the necessary ports in the firewall.
 # Turn off confirmation for ssh-ing into unknown hosts

@@ -42,77 +42,10 @@
 
   - include: kubernetes.yml
 
-  - name: turn swap off
-    command: swapoff -a
+  - include: swap.yml
 
-  - name: comment out swap
-    replace:
-      path: /etc/fstab
-      regexp: '^/swapfile'
-      replace: '#/swapfile'
+  - include: firewall_cni.yml
 
-  - name: comment out swap 2
-    replace:
-      path: /etc/fstab
-      regexp: '^([^#].*\sswap\s.*)$'
-      replace: '#\1'
-
-  - name: enable Docker
-    systemd:
-      name: docker
-      enabled: yes
-      state: stopped
-
-  - name:
-    copy:
-      src: /lib/systemd/system/docker.service
-      dest: /etc/systemd/system/docker.service
-      remote_src: yes
-
-  # Update this per Kubernetes guide
-  # Note that the comments in the default docker.service read
-  # contrary, and suggest systemd does not properly support docker
-  - name: Update Docker service
-    replace:
-      path: /etc/systemd/system/docker.service
-      regexp: '^ExecStart=/usr/bin/dockerd -H fd://$'
-      replace: 'ExecStart=/usr/bin/dockerd -H fd:// --exec-opt native.cgroupdriver=systemd'
-
-
-  - name: start Docker
-    systemd:
-      daemon_reload: yes
-      name: docker
-      enabled: yes
-      state: started
-
-  # Open UFW ports
-  - name: Open udp ports for weave
-    ufw:
-      rule: allow
-      from_ip: "{{ item }}"
-      to_port: 6783,6784
-      proto: udp
-    when: false
-    loop: "{{ extnet.subnets }}"
-
-  - name: Open tcp ports for weave
-    ufw:
-      rule: allow
-      from_ip: "{{ item }}"
-      to_port: 6783
-      proto: tcp
-    when: false
-    loop: "{{ extnet.subnets }}"
-
-  - name: Open tcp ports for BGP for Calico
-    ufw:
-      rule: allow
-      from_ip: "{{ item }}"
-      to_port: 179
-      proto: tcp
-    when: true
-    loop: "{{ extnet.subnets }}"
 
 - hosts: controller
   vars_files: intnet_vars.yml

@@ -4,8 +4,8 @@
 # For macOS, this also works if you are using Homebrew:
 brew install kubernetes-helm
 
-#Using Helm version 2.13.1
-#Kubectl version: 1.14.0 client / 1.13.5 server
+#Using Helm version 2.14.1
+#Kubectl version: 1.15.0 client / 1.15.1 server
 kubectl version
 
 #Set up a service account for Tiller:

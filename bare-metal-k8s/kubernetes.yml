@@ -12,6 +12,6 @@
 
 - name: install K8S tools
   apt:
-    name: [kubeadm=1.13.5-00, kubelet=1.13.5-00, kubectl=1.13.5-00]
+    name: [kubeadm=1.15.0-00, kubelet=1.15.0-00, kubectl=1.15.0-00]
     state: present
     update_cache: yes
