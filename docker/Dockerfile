@@ -64,6 +64,7 @@ USER $NB_UID
 RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --channel pcmdi/label/nightly --override-channels \
     'ipyleaflet' \
     'ipywidgets' \
+    'cftime' \
     'iris' \
     'iris-sample-data' \
     'nc-time-axis' \
@@ -89,7 +90,13 @@ RUN conda install --quiet --yes --channel esmvalgroup --channel conda-forge --ch
 
 # For some reason, Conda's cdo does not appear to include the Python
 # interface, so it's installed through pip
-RUN pip install cdo
+# cf-python and cf-plot are in the process of being updated to Python 3;
+# cf-plot's Python 3 branch, however, is not found online, so we
+#  provide our own version.
+# Note: cfunits is not cf-units: cf(dm/-python/-lplot) uses cfunits,
+# Iris uses cf-units (imported as cf_units)
+RUN pip install cdo==1.5.3 cfdm==1.7.7 git+https://bitbucket.org/cfpython/cf-python.git@python3 git+https://github.com/evertrol/cf-plot.git@python3-cfpython3 cfunits==3.1.1
+
 
 
 RUN pip install jupyterlab_thredds
