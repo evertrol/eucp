@@ -8,8 +8,10 @@
         group: jupyterhub
         # Need shadow for PAM authentication
         groups: [shadow, docker]
-        create_home: no
+        create_home: yes
+        home: /etc/jupyterhub
         password: !
+        shell: /bin/bash
         state: present
 
     - file:
