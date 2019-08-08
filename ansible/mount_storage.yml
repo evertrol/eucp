@@ -1,13 +1,13 @@
-- name: Make and mount file systems in the /mnt/data directory
+- name: Make and mount file systems in the /mnt/ directory
   block:
   - file:
-      path: "/mnt/data/{{ item.dir }}"
+      path: "/mnt/{{ item.dir }}"
       state: directory
   - filesystem:
       device: "/dev/{{ item.dev }}"
       fstype: xfs
   - mount:
-      path: "/mnt/data/{{ item.dir }}"
+      path: "/mnt/{{ item.dir }}"
       src: "/dev/{{ item.dev }}"
       state: mounted
       fstype: xfs
