@@ -17,18 +17,17 @@ RUN apt-get update \
     htop \
     grads \
     ncl-ncarg \
-##    gfortran-8 \
     cmake \
     libgl1-mesa-dev \
-##    qtdeclaratives5-dev
     gcc \
     g++ \
     git \
+    gnuplot \
+    imagemagick \
     qtbase5-dev \
     libncurses5-dev \
     libqwt-qt5-dev \
     libqt5opengl5-dev \
-##    libxerces-c-dev \
     libboost-all-dev \
     libgdal-dev \
     python3-numpy \
