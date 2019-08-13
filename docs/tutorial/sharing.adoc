@@ -44,7 +44,7 @@ To actually access other people's directories, use the special `_users` director
 Don't remove this `_users` (nor the `_data`) special directory (you actually can't)!
 It exists, because if you would change to the parent directory from your home directory, you'll be stuck in your Jupyter container.
 There is only one user in that container (plus a default Jupyter user, `jovyan`), and you will not see the other users.
-The `_users` directory correponds to the actual base directory of the underlying virtual machine, and let's you connect to other user's directories.
+The `_users` directory corresponds to the actual base directory of the underlying virtual machine, and let's you connect to other user's directories.
 
 Similarly, the `_data` directory leads directly to the data volume that has all the datasets.
 Both these special directories are mounted read-only into the container.
@@ -67,14 +67,14 @@ Once you're happy with your notebook, and have perhaps published the results, it
 
 Note that their are multiple other ways to share documents, whether they are notebooks, scripts or texts, such as Google Drive and variants.
 The GitHub/GitLab option is highlighted, because it may introduce people unfamiliar with git and services like GitHub to them.
-While it will not alwyas be the best option, it can, for example, be practical in case things start to expand beyond a simple notebook file, as it will keep things all in one place, and have the option to revert back to a previous working version in case mistakes were introduced.
+While it will not always be the best option, it can, for example, be practical in case things start to expand beyond a simple notebook file, as it will keep things all in one place, and have the option to revert back to a previous working version in case mistakes were introduced.
 
 === Sharing notebooks with GitLab
 
 This assumes you have an account for GitLab; GitLab allows people to (also) register an account with their Google, Twitter, Bitbucket of GitHub(!) account, if you don't want to yet make a new account.
 
 Once signed in, create a new repository (green button top right).
-Give it a logical and practial name, and check the other settings (by default, it should be set up to be a private project, which is likely what you want). Check the "Initialize repository with a README" box, and click "Create project".
+Give it a logical and practical name, and check the other settings (by default, it should be set up to be a private project, which is likely what you want). Check the "Initialize repository with a README" box, and click "Create project".
 
 The next page shows the new project's repository.
 If you want to edit the readme file, click it and you have the option to edit it (button in the center of the menu to the right).

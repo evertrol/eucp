@@ -1,4 +1,4 @@
-= How to's, why's and general tips
+= How-to's, why's and general tips
 
 How do I run Python 2?::
 +
@@ -87,7 +87,7 @@ We have therefore chosen to use a standard Docker container (the datascience not
 The container is used when logging in through the Hub.
 We don't install a copy of all the container software also on the underlying virtual machine: the latter is mainly used for running the services, not for directly running analyses on it.
 +
-If you have specific requests, we may be able to accomodate them; please let us know.
+If you have specific requests, we may be able to accommodate them; please let us know.
 
 What is "restart my server"?::
 +
@@ -134,7 +134,7 @@ or if you don't mind everything going into one file:
 ----
 ./myscript.py > output.txt 2>&1
 ----
-(This redirects the errors from `stderr` to whereever the normal output, `stdout` is going, which happens to be going into the file `output.txt`.)
+(This redirects the errors from `stderr` to where-ever the normal output, `stdout`, is going, which happens to be going into the file `output.txt`.)
 +
 You will want put the script in the background, and *disconnect it from the terminal*:
 Use control-z to background the script, type `bg` to put it in the background, then type `jobs` to see it is running in the background, take note of the number (which is *not* the PID), and disconnect it from the terminal: `disown %1` (or `disown %2` if it is the second processes, etc).
