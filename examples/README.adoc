@@ -10,6 +10,7 @@
 * link:knmi-climate-scenario2014/worldtemp-iris.html[Annotated example using Iris to show the global temperature trend]
 * link:knmi-climate-scenario2014/worldtemp-iris-short.html[Short version of the above example]
 * link:knmi-climate-scenario2014/worldtemp-iris-short.html[Version of the above example, using the netCDF4 package and Pandas instead of Iris]
+* link:knmi-climate-scenario2014/rhine-temp-response.html[Rhine basin temperature response over time]
 
 .Iris examples
 * link:iris/SOI-filtering.html[Applying a filter to a time-series]
