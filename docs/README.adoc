@@ -1,10 +1,14 @@
+:indexfile: index
+
+ifdef::env-github[],env-browser[:indexfile: README]
+
 Table of contents
 
 * <<Overview of the EUCP JupyterHub>>
 
-* <<tutorial/index#,Tutorial for JupyterLab>>
+* <<tutorial/{indexfile}#,Tutorial for JupyterLab>>
 
-* <<examples/index#,Some practical notebook examples>>
+* <<examples/{indexfile}#,Some practical notebook examples>>
 
 * <<architecture#,Overview of the architecture used>>
 
