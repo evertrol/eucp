@@ -1,0 +1,170 @@
+/* JupyterHub style, adjusted with the EUCP style, which uses a Bootstrap theme
+Adjustments have only been made to visible items to match color, fonts and such */
+
+body {
+  background-color: #ffffff;
+  font-family: Raleway, Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  color: #666666;
+  max-width: 960px;
+  margin: auto;
+  line-height: 150%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 400;
+  color: #555555;
+}
+
+a {
+  color: #1d477c;
+  text-decoration: none;
+}
+
+ul {
+  padding-left: 1em;
+}
+
+ul ul {
+  list-style: none;
+  line-height: 90%;
+}
+
+ul ul p {
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.btn-jupyter {
+  color: #fff;
+  background-color: #3498DB;
+  border-color: #26578F
+}
+.btn-jupyter.focus, .btn-jupyter: focus {
+  color: #fff;
+  background-color: #64afdd;
+  border-color: #76270f
+}
+.btn-jupyter: hover {
+  color: #fff;
+  background-color: #64afdd;
+  border-color: #5299cb
+}
+.btn-jupyter.active, .btn-jupyter: active, .open > .dropdown-toggle.btn-jupyter {
+  color: #fff;
+  background-color: #64afdd;
+  background-image: none;
+  border-color: #5299cb
+}
+.btn-jupyter.active.focus, .btn-jupyter.active: focus, .btn-jupyter.active: hover, .btn-jupyter: active.focus, .btn-jupyter: active: focus, .btn-jupyter: active: hover, .open > .dropdown-toggle.btn-jupyter.focus, .open > .dropdown-toggle.btn-jupyter: focus, .open > .dropdown-toggle.btn-jupyter: hover{color: #fff;
+  background-color: #64afdd;
+  border-color: #76270f
+}
+.btn-jupyter.disabled.focus, .btn-jupyter.disabled: focus, .btn-jupyter.disabled: hover, .btn-jupyter[disabled].focus, .btn-jupyter[disabled]: focus, .btn-jupyter[disabled]: hover, fieldset[disabled] .btn-jupyter.focus, fieldset[disabled] .btn-jupyter: focus, fieldset[disabled] .btn-jupyter: hover {
+  background-color: #3498DB;
+  border-color: #26578F
+}
+.btn-jupyter .badge {
+  color: #3498DB;
+  background-color: #fff
+}
+.jpy-logo {
+  height: 28px;
+  margin-top: 6px
+}
+#header {
+  border-bottom: 1px solid #e7e7e7
+}
+.hidden {
+  display: none
+}
+#progress-log {
+  margin-top: 8px
+}
+.progress-log-event {
+  border-top: 1px solid #e7e7e7;
+  padding: 8px
+}
+i.sort-icon {
+  margin-left: 4px
+}
+div.error {
+  margin: 2em;
+  text-align: center
+}
+div.ajax-error {
+  padding: 1em;
+  text-align: center;
+  color: #a94442;
+  background-color: #f2dede;
+  border-color: #ebccd1
+}
+div.ajax-error hr {
+  border-top-color: #e4b9c0
+}
+div.ajax-error .alert-link {
+  color: #843534
+}
+div.error > h1 {
+  font-size: 300%;
+  line-height: normal
+}
+div.error > p {
+  font-size: 200%;
+  line-height: normal
+}
+#login-main {
+  display: table;
+  height: 80vh
+}
+#login-main #insecure-login-warning {
+  background-color: #fcf8e3;
+  padding: 10px
+}
+a#login-main #insecure-login-warning: focus, a#login-main #insecure-login-warning: hover {
+  background-color: #f7ecb5
+}
+#login-main .service-login {
+  text-align: center;
+  display: table-cell;
+  vertical-align: middle;
+  margin: auto auto 20% auto
+}
+#login-main form {
+  display: table-cell;
+  vertical-align: middle;
+  margin: auto auto 20% auto;
+  width: 350px;
+  font-size: large
+}
+#login-main .input-group, #login-main button, #login-main input[type=text] {
+  width: 100%
+}
+#login-main input[type=submit] {
+  margin-top: 16px
+}
+#login-main .form-control: focus, #login-main input[type=submit]: focus {
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px #3498DB;
+  border-color: #3498DB;
+  outline-color: #3498DB
+}
+#login-main .login_error {
+  color: #ff4500;
+  font-weight: 700;
+  text-align: center
+}
+#login-main .auth-form-header {
+  padding: 10px 20px;
+  color: #fff;
+  background: #3498DB;
+  border-radius: 3px 3px 0 0
+}
+#login-main .auth-form-body {
+  padding: 20px;
+  font-size: 14px;
+  border: thin silver solid;
+  border-top: none;
+  border-radius: 0 0 3px 3px
+}
