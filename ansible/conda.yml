@@ -1,6 +1,10 @@
 # We use Conda instead of
 # - OS packages: not all packages are available, and some may be very outdated
-# - pip packages: this may cause problems with library dependencies, e.g. for a package like iris
+# - pip packages: this may cause problems with library dependencies
+#
+# Only the basic packages will be installed; everything else is
+# available through the Jupyter docker container.
+
 - name: Install Conda, JupyterHub & related packages
   block:
     # Note: there is an Ansible Conda module, but it's not core
@@ -11,13 +15,6 @@
     - command: bash /tmp/Miniconda3-3.7.0-Linux-x86_64.sh -b -p /opt/conda
       args:
         creates: /opt/conda
-#    - command: bash /tmp/Miniconda3-3.7.0-Linux-x86_64.sh -b -p /mnt/data/data1/conda
-#      args:
-#        creates: /mnt/data/data1/conda
-#    - file:
-#        src: /mnt/data/data1/conda
-#        path: /opt/conda
-#        state: link
     - command: /opt/conda/bin/conda update --yes --quiet conda
     - command: /opt/conda/bin/conda install --yes --quiet --channel conda-forge python=3.6
       args:
@@ -34,35 +31,11 @@
         - jupyterlab
         - sudospawner
         - dockerspawner
-        - ipywidgets
-        - iris
-        - iris-sample-data
-        - ipyleaflet
-        - dask
-        - xarray
-        - pyproj
         - numpy
         - scipy
         - matplotlib
-        - seaborn
         - netcdf4
         - pandas
-        - scikit-learn
-
-    - command: /opt/conda/bin/jupyter labextension install @{{ item.scope }}/{{ item.ext }}
-      args:
-        creates: /opt/conda/share/jupyter/lab/extensions/{{ item.scope }}-{{ item.ext }}-*.tgz
-      loop:
-        - { scope: jupyterlab, ext: hub-extension }
-        - { scope: jupyter-widgets, ext: jupyterlab-manager }
-        - { scope: ewatercycle, ext: jupyterlab_thredds }
-    - command: /opt/conda/bin/jupyter labextension install jupyter-leaflet
-      args:
-        creates: /opt/conda/share/jupyter/lab/extensions/jupyter-leaflet-*.tgz
-
-    - command: /opt/conda/bin/python3.6 -m pip install git+https://github.com/eWaterCycle/jupyterlab_thredds.git
-      args:
-        creates: /opt/conda/lib/python3.6/jupyterlab_thredds
 
     - file:
         path: /opt/conda
