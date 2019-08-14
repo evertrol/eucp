@@ -1,5 +1,7 @@
 = Example climate analysis notebooks
 
+You can find the actual notebooks for these examples at https://github.com/nlesc/eucp/examples/.
+
 .General statistics
 * link:statistics.html[General usage and statistics] (from a MET summer school in June 2018)
 
