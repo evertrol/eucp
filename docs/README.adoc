@@ -1,0 +1,188 @@
+:indexfile: index
+
+Table of contents
+
+* <<Overview of the EUCP JupyterHub>>
+
+* <<tutorial/{indexfile}#,Tutorial for JupyterLab>>
+
+* <<examples/{indexfile}#,Some practical notebook examples>>
+
+* <<architecture#,Overview of the architecture used>>
+
+
+== Overview of the EUCP JupyterHub
+
+The EUCP JupyterHub is based directly on the standard JupyterHub architecture: it runs the JupyterHub server, proxied through the Nginx webserver.
+The Nginx webserver also proxies (and password protects) the THREDDS server, and serves these help pages.
+
+The user environment chosen for the JupyterHub is not the default Jupyter notebook, but the JupyterLab setup.
+This all runs directly in your webbrowser.
+JupyterLab includes the default notebooks (and one can revert to this layout if so wanted), but makes navigating files and folders hopefully easier.
+A terminal interface is also included, which allows access to other utilities; this may be shell (bash) tools, the GNU Fortran compiler or the CDO utilities.
+(Note for Safari users: a bug results in black font on a black background when using the terminal, making it unusable. This is known and the first new JupyterHub release will fix this. For now, the best work-around is to use a different browser.)
+
+The JupyterHub runs a Docker container for each logged-in user.
+This separates the current user completely from other users and the system (but see below)
+This container is derived from the standard Jupyter datascience notebooks, which can run Python 3, R or Julia, and have a suite of (default) packages installed for these languages.
+For Python, we have extended the list of packages with a set suitable for climate analysis.
+
+In addition, the container provides command-line utilities used in climate science.
+The latter are often added to make transitioning to, for example, a complete Python script easier: this aims to make the resulting analysis scripts and notebooks more transparent to other users (once published) and more portable to other machines and architectures (Python, but also R and Julia, support a wide variety of architectures).
+
+
+=== Logging in, sessions and kernels
+
+If you log in through the default webpage login, your session remains saved behind the scenes.
+If you quit your browser or close the tab, a next time you navigate to the JupyterHub, you don't need to log in again: you are still logged in.
+This doesn't work across browsers or private sessions (that is, it relies on cookies), so this may be something to be aware of if you don't want others to be able to access your work.
+There is an explicit log-out option: navigate to `File -> Log Out`.
+
+Sometimes, you may need to restart your Jupyter server. This can be done explicitly by going to the "control hub" (`File -> Hub Control Panel`).
+From the control hub, you can stop your current server, then restart it again.
+This won't affect your (saved) files at all: it only affects running notebooks (they will be interrupted), but the full session will still be there.
+Navigate back through `My Server`.
+
+A server restart is sometimes necessary if, after logging in, the JupyterLab interface doesn't appear.
+JupyterHub will normally inform you, and suggest to restart the server (by stopping and then starting it).
+This may happen if there have been some changes on the hosting machine or to the Docker container (such as additional packages).
+
+==== Sessions
+
+Even if you explicitly log out (or just close the browser tab), your session will remain running on the hosting machine (inside the Docker container).
+This is useful for long-running jobs: they can continue over the weekend, for example.
+
+Be aware that, when running a job (cell) in a notebook and you log out, the output may be lost.
+In particular, output that would be sent to an output cell, will be lost.
+The solution is to assign the output to a variable.
+Once the job (cell) is finished, and you are logged back in, printing the variable by itself will contain the output.
+(Alternatively, you can save the output to a file, but I personally prefer keeping it around in a variable: I often have to use the data again, and with a variable, it is immediately accessible.)
+
+The same holds for running something in the terminal: make sure you redirect your output to a file to save the output.
+
+Note that, when logging back in, a cell may still indicate it is active (with the `[*]` in front of it): this may not have to be the case, so try outputting the variable with the saved results in a new cell (e.g., directly below the running cell): if you get a result, the active cell is actually ready, and it's state indicator has become stale.
+
+This is all very similar (effectively the same) as logging in via ssh to a machine, starting a job, putting it in the background (probably with `disown` as well) and then existing that machine: the output would be lost there as well, if it's not redirected.
+
+==== Kernels
+
+Each session can run multiple "kernels".
+A kernel here is simply an instance of a notebook or terminal, and under the hood this means, for example, a separate Python process (for each notebook opened).
+A kernel can be restarted (`Kernel -> Restart kernel...`): this will not affect any other notebooks running, so this is safe to do for a specific notebook; it can be useful if the current notebook is somehow in a state that makes it hard to continue (for example, plot settings have changed due to going back and forth between individual cells).
+Restarting a kernel will cause all imports, variable settings, functions definitions etc. for the notebook to be reset as well: it provides a completely new Python/R/Julia environment.
+
+If you installed a package yourself, you will need to restart the kernel for the package to be found.
+Note that self-installed packages will disappear if the Jupyter server itself is restarted.
+
+
+=== Access to data and other users directories
+
+A Docker container completely separates its contents (and logged-in user) from the environment it runs in, as a separate machine.
+For practical reasons, it is possible to provide "mount points" to directories on the hosting machine.
+In this case, there are two such mount points provided, visible as directories: `_data` and `_users`.
+
+The first directory, `_data`, leads directly to the data hosted on the system that is also served by the THREDDS server.
+This provides another way (than using the THREDDS server) to read the data.
+Some subdirectories are only accessible depending on user's the work package: the system uses Unix-style group access to restrict access to data directories that are specific to certain work packages.
+
+Similarly, the `_users` directory points to the base home directory of all users on the system.
+Again, access restrictions based on group access (work packages and institutions) are in place.
+If you find anything incorrect with the access restrictions, please let us know at e.rol@esciencecenter.nl.
+
+=== Parallel and asynchronous tasks
+
+Running tasks in parallel or asynchronous is possible, to a certain point.
+For Python, a package like `dask` is installed, which can make this very intuitive.
+
+However, the system does not automatically scale with changing load: if a task is run on all its cores, other processes (including other users) will suffer.
+
+We can't, at the moment, support something like Pangeo does (Pangeo also uses a JupyterHub in the cloud, built on top of Kubernetes), where a compute-intensive tasks is spun off in its own container, and returns when its ready, removing the container (and CPU requirements) as well.
+
+The reason for this is that our hosting platform, the SURFSara HPC Cloud, unfortunately does not support Kubernetes.
+Without that, it is very hard to easily scale the number of requires (CPU) resources up or down.
+(Pangeo, for example, uses the Kubernetes architecture under the hood for its scaling.)
+
+It is possible that this will be supported in the future (in which case we may transition to Pangeo), but this requires quite some work to set this up on our current hosting platform.
+
+
+=== list of Python packages and command-line utilities installed
+
+All packages are for Python 3.7.3.
+
+You can install packages yourself using pip (`pip install <package>`) or conda (`conda install <package>`); there is no `sudo` or `--user` option needed.
+
+You can get a full list of Python packages in the terminal interface, with `pip list`. Below is a selected list:
+
+[#python-packages]
+* Standard scientific packages
+** numpy 1.15.4
+** scipy 1.2.1
+** pandas 0.24.2
+** scikit-learn 0.20.3
+** scikit-image 0.14.3
+** statsmodels 0.9.0
+** Cython 0.29.12
+** sympy 1.3
+** numba 0.42.1
+** numexpr 2.6.9
+** dask 1.1.5
+** Pillow 6.1.0
+
+* Plotting
+** matplotlib 2.2.4
+** seaborn 0.9.0
+** Cartopy 0.17.0
+
+* Climate analysis packages
+** xarray 0.10.7
+** pyproj 2.2.1
+** scitools-iris 2.2.1dev0
+** cf-units 2.1.3  (used by iris)
+** cfunits 3.1.1 (used by cf/cf-plot)
+** cfdm 1.7.7
+** cf-python 3.0.0b5
+** cf-plot 2.4.10 (unsupported; best attempt at conversion
+** cftime 1.0.3.4
+** eofs 1.4.0
+** cdo 1.5.3 (Python interface to CDO)
+** CMOR 3.5.0
+** ESMPy 7.1.0dev0
+** ESMValCore 2.0.0b0
+** GDAL 2.4.2 (Python interface to libgdal)
+
+* Data formats
+** netCDF4
+** h5py 2.9.0
+
+* Other
+** SQLAlchemy 1.3.5
+** requests 2.22.0
+** beautifulsoup4 4.7.1
+** yamale 1.7.0
+
+==== Command line tools
+
+Be aware that there is no X-windows or other window interface; all utilites have to be run without displaying windows or images.
+
+[#cmdline-utilities]
+* Generic utilities
+** bash 4.4.20
+** zsh 5.4.2
+** tcsh 6.20.0
+** perl 5.26.1
+** python 3.7.3
+** git 2.17.1
+** TeXLive 2017
+** gnuplot 5.2
+** imagemagick 6.9.7-4
+
+* Climate science utilities
+** cdo 1.9.6
+** grads 2.2.0
+** ncl 6.4.0
+** pcraster 4.1
+
+* Compilers and tools
+** gcc / g++ / gfortran 7.4.0
+** cmake 3.10.2
+** make 4.2.1

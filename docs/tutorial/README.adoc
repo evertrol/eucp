@@ -2,10 +2,10 @@ These pages provide some introduction and practical information on JupyterHub an
 
 Contents are:
 
-* link:introduction.adoc[Introduction]
+* <<introduction#,Introduction>>
 
-* link:howto.adoc[How-tos and whys]
+* <<howto#,How-tos and whys>>
 
-* link:style.adoc[Notebook style guide]
+* <<style#,Notebook style guide>>
 
-* link:shortcuts.adoc[Convenient JupyterLab (keyboard) shortcuts]
+* <<shortcuts#,Convenient JupyterLab (keyboard) shortcuts>>

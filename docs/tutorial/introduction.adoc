@@ -96,11 +96,11 @@ You can avoid output by assigning to a variable (the underscore variable can be 
 Cells can be of another type than code: plain text ("raw") and Markdown are also possible.
 Select the cell type from the "Code" menu item at the top of the notebook.
 Note that "code" type of cells have an (empty) number holder in front of them `[ ]:`.
-Markdown is a simple mark-up language, and it is useful if you want to provide a bit more layout (lists, tables, headings, indentated text) than you can achieve with raw text.
+Markdown is a simple mark-up language, and it is useful if you want to provide a bit more layout (lists, tables, headings, indented text) than you can achieve with raw text.
 You'll need to "run" a Markdown cell to actually render it into HTML.
 If you select to edit a Markdown cell, it will automatically revert to Markdown (from HTML) until you rerun it, after which it will show rendered HTML again.
 
-The code type is always that of the chosen kernel. You can change the kernel of a notebook, although this will be of limited use (it was useful for transitionting Python 2 to Python 3 code).
+The code type is always that of the chosen kernel. You can change the kernel of a notebook, although this will be of limited use (it was useful for transitioning Python 2 to Python 3 code).
 There are ways of running, for example, an R code block in a few cells inside a Jupyter Python (3) notebook.
 For reproducibility and convenience of other users, however, we don't recommend this.
 

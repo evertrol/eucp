@@ -1,4 +1,4 @@
-= Architecture
+== Architecture
 
 
 The notebook implementation used is the Jupyter notebook.

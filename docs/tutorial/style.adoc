@@ -30,11 +30,11 @@ A very brief summary:
 I personally only don't do this inside array indices, e.g. `myarray[1:3,4:10]`.
 ** Use four space indentation.
 Do not use tabs (most Python-aware editors will automatically convert <tab> to four spaces).
-** Use Lowercase variables, possibly with underscores to separate wordparts.
+** Use lowercase variables, possibly with underscores to separate word_parts.
 ** Avoid importing everything from a package.
 That is, do not do something like `from numpy import *`.
 This can overwrite variables and functions defined or imported earlier, without noticing.
-Instead, keep the namespace, and possibly use some (established) abbrevations.
+Instead, keep the namespace, and possibly use some (established) abbreviations.
 For example, the following imports are fairly default:
 +
 [source]
