@@ -1,7 +1,5 @@
 :indexfile: index
 
-ifdef::env-github[],env-browser[:indexfile: README]
-
 Table of contents
 
 * <<Overview of the EUCP JupyterHub>>
