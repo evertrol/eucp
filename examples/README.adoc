@@ -1,0 +1,27 @@
+= Example climate analysis notebooks
+
+.General statistics
+* link:statistics.html[General usage and statistics] (from a MET summer school in June 2018)
+
+.Precipitation trend
+* link:precipitation-trend.html[Summer precipiation trends] (with help from KNMI colleagues)
+
+.KNMI climate scenario 2014 figures
+* link:knmi-climate-scenario2014/worldtemp-iris.html[Annotated example using Iris to show the global temperature trend]
+* link:knmi-climate-scenario2014/worldtemp-iris-short.html[Short version of the above example]
+* link:knmi-climate-scenario2014/worldtemp-iris-short.html[Version of the above example, using the netCDF4 package and Pandas instead of Iris]
+
+.Iris examples
+* link:iris/SOI-filtering.html[Applying a filter to a time-series]
+* link:iris/anomaly-log-colouring.html[Colouring anomaly data with logarithmic scaling]
+* link:iris/coriolis-plot.html[Deriving the Coriolis frequency over the globe]
+* link:iris/cross-section.html[Cross section plots]
+* link:iris/custom-statistic.html[Calculating a custom statistic]
+* link:iris/fitting-polynomial.ipynb[Fitting a polynomial]
+* link:iris/global-map.html[Quickplot of a 2d cube on a map]
+* link:iris/inset-plot.html[Test Data Showing Inset Plots]
+* link:iris/multiline-temp-plot.html[Multi-line temperature profile plot]
+* link:iris/orca-projection.html[Tri-Polar Grid Projected Plotting]
+* link:iris/rotated-pole-mapping.html[Rotated pole mapping]
+
+The Iris examples are taken from the https://scitools.org.uk/iris/docs/latest/examples/index.html[Iris website], and are distributed under the GPL, and copyrighted British Crown 2010 - 2018, Met Office.
