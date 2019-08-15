@@ -12,9 +12,23 @@
 
 - name: Create JupyterHub nginx configuration file
   template:
-    src: jupyterhub-nginx.conf
+    src: nginx-conf/jupyterhub.conf
     dest: /etc/nginx/sites-available/jupyterhub.conf
     mode: 0644
+
+- name: Create JupyterHub includes directory
+  file:
+    path: /etc/nginx/includes
+    state: directory
+    recurse: yes
+    mode: 0755
+
+- name: Copy nginx include files
+  template:
+    src: nginx-conf/includes/{{ item }}
+    dest: /etc/nginx/includes/{{ item }}
+    mode: 0644
+  loop: [certificates.conf lab_help.conf thredds.conf jupyterhub.conf]
 
 - name: Symlink JupyterHub nginx configuration file to active sites
   file:
