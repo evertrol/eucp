@@ -33,3 +33,11 @@
 
 - name: Add www-data to shadow, to be able to read the password file for PAM authentication
   shell: usermod -a -G shadow www-data
+
+- name: Store PAM user and group access restrictions for Nginx - THREDDS access
+  file:
+    src: nginx-conf/pam/{{ item }}
+    dest: /etc/pam.d/{{ item }}
+  loop:
+    - nginx_restricted_cp-rcm
+    - nginx_restricted_groups_cp-rcm
