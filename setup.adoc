@@ -1,0 +1,180 @@
+= Setup guide for the EUCP analytics and data sharing environment
+
+
+== General setup
+
+The analytics environment consists of a few main items, and is developed and expanded during the four-year duration of EUCP project:
+
+* a JupyterHub, with a JupyterLab interface
+* a THREDDS data server
+* 100 TB of shared disk space for (intermediate) data storage
+
+This allows researches to work remotely, with direct access to the data, in notebooks.
+The latter can be published alongside the results, for reproducibility.
+
+== Contact point
+
+The main contact point for the setup and administration of the analytics environment is Evert Rol: e.rol@esciencecenter.nl
+
+Alternatively, contact https://www.esciencecenter.nl/profile/dr.-jisk-attema[Jisk Attema].
+
+
+== Cloud environment
+
+The analytics environment runs on the https://doc.hpccloud.surfsara.nl[SURFSara HPC Cloud], which uses OpenNebula as its interface.
+
+To obtain access to the virtual machines (VMs) used in the EUCP project, you'll need an account with SURFSara for the HPC Cloud, as well as access to the specific project (nlesc-eucp; id 779).
+
+Here, you should find a list of template VMs; the main one used is simply called `server`.
+
+This server has several storage disks connected (six are listed, but the first one is the boot disk with the OS):
+
+- shared data 1, 36 TB
+- shared data 2, 29 TB
+- shared data 3, 29 TB
+- user work space, 4 TB
+- user scratch space, 1 TB
+
+The first three disks contain data files used within the EUCP project.
+The user work space contains the user directories, with space provided for intermediate data storage; it is shared across all users, so it should be avoided that one user takes up all disk space.
+The user scratch space is left-over space from previous iterations, and is only used as temporary space by the administrator.
+
+== Ansible setup
+
+The link:ansible/README.adoc[Ansible directory] provides an Ansible playbook to set up the server, once it has started and its external IP is known.
+There are a few `*_template.yml` files that need to be copied to a file without the `_template` part, and then be updated for the relevant situation:
+
+* `mount_vars.yml` specifies the directory mount points for the disks.
+  With the above five disks, something like this can work:
++
+----
+mounts:
+  - { dir: data/data1, dev: vdb }
+  - { dir: data/data2, dev: vdc }
+  - { dir: data/data3, dev: vdd }
+  - { dir: users, dev: vde }
+  - { dir: scratch, dev: vdf }
+----
+All directories are subdirectories of `/mnt/`.
+* `server_var.yml` sets the server name and an administrator email.
+  The server name can be retrieved from the cloud interface once the VM has been started and has an external IP address; it should have a server name, and the full server name is then `<name>.eucp-nlesc.surf-hosted.nl`, which is the entry to use in `server_var.yml`.
+* `user_vars.yml` allows one to automatically add users (and groups) to the new system.
+  If you prefer to do this later (manually), set it to an empty list: `users: []`.
+* `docker_vars.yml` (this one has no template)
+  Set the default Docker image to use in JupyterHub
+
+Ansible also requires an inventory file, here simply called `hosts`, which has just one entry: the IP or name (or SSH alias) of the VM.
+
+You may want to update your `~/.ssh/config` file with the VM with the relevant key stored in OpenNebula; my entry looks a bit as follows:
+----
+Host hpccloud
+  IdentityFile ~/.ssh/id_rsa_hpccloud
+  HostName 145.100.xy.abc
+  User ubuntu
+----
+I'm using a separate public key file, and since we are using an Ubuntu 18.04 LTS system, the default administrator account is `ubuntu`.
+
+You should now be able to run the Ansible playbook as follows:
+----
+ansible-playbook -i hosts hpccloud-playbook.yml
+----
+
+The playbook already defines an administrator user; otherwise, one can use the options `--become --user ubuntu` to let Ansible know that `ubuntu` is the default (login) administrator account that has `sudo` access to be able to install things.
+
+For details, please peruse the `hpccloud-playbook.yml` file (and its includes), which should clarify what gets installed, what gets created, and what configuration files are setup.
+Some configuration template files that are copied:
+* `threddsConfig.xml` and `catalog-thredds.xml` for the THREDDS data server
+* `jupyterhub_config.py` and `systemgroupspawner.py` for the JupyterHub server
+* `vsftpd.conf` for the FTP upload site
+* files in the `nginx-conf/` directory for the Nginx server
+
+Note that the playbook also runs the LetsEncrypt software to obtain an SSL certificate for use with HTTPS.
+There are two potential disadvantages if you run this multiple times:
+
+* the generation of the Diffie Hellman parameters takes quite some time (5 - 10 minutes)
+* LetsEncrypt only allows a limited number of accesses per day or week
+
+Generally, there is a check that an existing certificate or DH parameter file is not overwritten, but when creating a server completely from scratch each time, the above limitations should be kept in mind.
+See also the `letsencrypt.yml` file.
+
+For some minor customisations of JupyterHub, there are HTML templates and CSS files in the `jupyterhub-templates/ subdirectory of the `ansible/` directory.
+The HTML templates are stored in `/etc/jupyterhub/templates/` directory, but the CSS file needs to be `/opt/conda/share/jupyterhub/static/css/` directory; I have not yet found a way to point JupyterHub to an additional static (CSS, images, scripts) directory, so it needs to be copied into the default directory.
+
+== Login / Authentication
+
+Authentication is done by the server, through PAM.
+Most JupyterHub servers will use an external OAuth service such as Google, Facebook or GitHub.
+The reasons for local authentication are:
+- better control over the registered users
+- not forcing users on an OAuth service
+- the same authentication can be used easily for the THREDDS data server and other services (though these could be set up with an OAuth service as well)
+
+Authentication other than JupyterHub is handled through Nginx, mainly for data access through the THREDDS server.
+Using PAM access allows for using user and group authorization for access of files and directories, both through Nginx and the standard file system.
+
+The disadvantage is that, in order to change a password, a user has to log with ssh to the server: JupyterHub does not handle this.
+
+Ssh access is allowed, although tools accessible through ssh are minimal, since everything runs in a Docker image.
+Ssh access is mainly targeted at up- or downloading data, through e.g. rsync or scp.
+
+
+== Docker image
+
+The `docker/` directory only contains a `Dockerfile`, for creating the work environment inside a user Jupyter session.
+It is based on the standard Jupyter datascience notebook (which uses an Ubuntu image as starting point).
+Software is installed using a mix of the `apt` package manager, manual installation, `Conda` and Python's `pip`.
+
+The created image is uploaded to the Docker hub, and its ID stored in the Ansible `docker_vars.yml` file mentioned earlier.
+
+
+== Documentation and examples
+
+Documentation is provided in the `docs/` directory.
+Most of the documentation is geared towards new users.
+The `examples/` directory is linked within the `docs/` directory.
+
+All files use the ASCIIDoc format, which is automatically rendered by GitHub.
+ASCIIDoctor is used to transform the ASCIIDoc pages into HTML, which can then be copied to an `/var/www/html/eucp-lab/help/` directory; Nginx serves this directory under the `https://<servername>/help/` URL.
+
+
+== The Kubernetes experiment
+
+Note: of course it is easier to use Google Cloud, Microsoft Azure, AWS or another cloud service, where Kubernetes runs out of the box.
+The problem here is that this loses access to the 100 TB data server next to the JupyterHub server.
+
+
+In `bare-metal-k8s` is a setup for JupyterHub on Kubernetes on the OpenNebula SURFSara HPC Cloud.
+The problem with the HPC Cloud is, that no Kubernetes is provided as a standard option (even though there are some OpenNebula images that set this up).
+The setup in this directory results from that lack, and provides a very manual (and single OS, Ubuntu 18.04 LTS) setup for a very simple Kubernetes setup.
+
+This section will otherwise not detail the setup, but start from `bare-metal-k8s/kubernetes-jupyterhub-install.bash` to see what gets installed, and which (sub)scripts get run.
+This script is a wrapper around a variety of a few Python scripts (for creating a cluster), Ansible (for setting up the cluster nodes), and a set of Helm commands for installing the JupyterHub on Kubernetes.
+
+
+The reason for trying Kubernetes is twofold:
+
+* some existing projects for climate science use Kubernetes.
+  For example, https://github.com/pangeo-data[Pangeo] puts an extended JupyterHub on top of Kubernetes, with options to spin off long-running jobs via Dask in separate Kubernetes pods.
+* Using Kubernetes would make it much easier to scale the analytics environment to the required needs.
+  While it is possible to add or remove CPUs to the existing VM, this requires
+** stopping the VM completely, scaling it, then starting it up again
+** allocating space for the scaled VM.
+   This may be problematic once the number of CPU cores goes above sixteen.
+
+While the current setup can run JupyterHub, it is currently very limited and essentially unfinished.
+In particular, storage is not permanent, there are no login limitations, and there is definitely no scaling of CPU cores possible.
+
+Future plans are
+
+* Use NFS for permanent storage, in particular for user directories (that is, it will not use cloud storage, and ssh access to one's home directory should still be possible)
+* Move from PAM authentication to LDAP (or keep both synchronised), for JupyterHub authentication
+* Use the OpenNebula XML-RPC API to add or remove new VMs that can run Kubernetes' pods.
+
+The latter step requires some further thoughts:
+
+* it probably needs one pod per VM.
+  This way, once a Jupyter session is closed, the pod can be cleared, and then the VM.
+  With multiple pods per VM, the system could end up with one pod per VM, and the VM other cores sitting idle (unless it's easy to move pods across VMs, but the requirement for permanent storage and mounted volumes may become problematic here).
+* there needs to be a way for Kubernetes to tell the system that the load is increasing, and new VMs need to be created.
+  Vice versa, Kubernetes needs to be able to tell the system when VMs can be destroyed.
+  If this is done, the system can then use the XML-RPC API to add or remove VMs.
