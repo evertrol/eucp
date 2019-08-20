@@ -5,11 +5,6 @@
   apt:
     name: [nginx, libnginx-mod-http-auth-pam]
 
-- name: Generate Diffie Hellman parameters; takes a few minutes
-  shell: openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096
-  args:
-    creates: /etc/ssl/certs/dhparam.pem
-
 - name: Create JupyterHub nginx configuration file
   template:
     src: nginx-conf/jupyterhub.conf
