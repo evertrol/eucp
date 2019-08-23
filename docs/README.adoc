@@ -1,6 +1,5 @@
 :indexfile: index
 
-Table of contents
 
 * <<Overview of the EUCP JupyterHub>>
 
@@ -105,7 +104,7 @@ Without that, it is very hard to easily scale the number of requires (CPU) resou
 It is possible that this will be supported in the future (in which case we may transition to Pangeo), but this requires quite some work to set this up on our current hosting platform.
 
 
-=== list of Python packages and command-line utilities installed
+=== List of Python packages and command-line utilities installed
 
 All packages are for Python 3.7.3.
 
