@@ -150,3 +150,48 @@ $ disown %1
 $ jobs
 <no output>
 ----
+
+== Can I run a Jupyter Lab with the same software installed locally on my machine?
+
+Yes.
+
+You could install all the packages yourself, including JupyterLab, using a combination of your package manager, Conda en pip.
+
+It is easier if you can install and use Docker.
+Check how to install it for your system.
+(Note: Docker, under the hood, requires admin/root access; this may prevent installation or usage on some systems.)
+
+Once you have Docker up and running, obtain the Docker image for the EUCP JupyterHub. Currently (August 2019), this is
+[source]
+docker pull evertrol/eucp-notebook:08eb66f14951
+
+(You don't even need to do this explicitly, since the command below will retrieve the image if it's not already downloaded.)
+
+Once this is downloaded (8.6 GB), you can run it, with an internal port inside the Docker container pointing to one on your system:
+[source]
+docker run  -p 8888:8888 evertrol/eucp-notebook:08eb66f14951
+
+Give it a few seconds to get started, then notice the line
+[source]
+----
+    To access the notebook, open this file in a browser:
+        file:///home/jovyan/.local/share/jupyter/runtime/nbserver-6-open.html
+    Or copy and paste one of these URLs:
+        http://(08cd706d98b3 or 127.0.0.1):8888/?token=0a26b4d7ec6cd5febf62ea00ab761f3350a14700ac09f017
+----
+
+The second line will not work, since this is internal to the Docker container; the same goes for the first part between parentheses.
+In this case, you'll want to go to `http://127.0.0.1:8888/?token=0a26b4d7ec6cd5febf62ea00ab761f3350a14700ac09f017` (the `8888` here is the first `8888` in the `run -p 8888:8888` command above, so change it if you picked a different port).
+
+This should show a Jupyter notebook, but not yet a lab environment.
+Both have identical functionality otherwise (e.g., the Jupyter notebook also has a terminal app); if you want to switch to the lab environment, change the `/tree` part in the resulting URL to `/lab`.
+
+Since this all runs inside a Docker container, and only connects to your machine via this TCP port, you'll need to mount some volumes to access directories on your system.
+Quit the current running container (control-C); you can also close the current Jupyter session, since a next run, the token will be different, and this session is forgotten.
+
+Now, run the Docker container with, for example, the following volumes mounted:
+[source]
+docker run  -p 8888:8888 -v $HOME/:/home/jovyan/home/ -v $HOME/data/:/home/jovyan/data/ evertrol/eucp-notebook:08eb66f14951
+
+This will show two directories (next to the default `work` directory) in the notebook, that point directly to your home directory and a `data` subdirectory.
+(`jovyan` is the default user in a Jupyter-based Docker container).
