@@ -6,4 +6,4 @@ See https://scitools.org.uk/iris/docs/latest/examples/index.html for the origina
 You need the Iris example data, which can be installed using, for example, `conda install -c conda-forge iris-sample-data`.
 The example data can then be found in the Python `site-packages` directory, in the `iris_sampel_data/sample_data/` subdirectory, or use the `iris.sample_data_path()` function.
 
-The Iris examples are distributed under the http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/[UK's Open Government Licence] and copyright British Crown 2014.
+The Iris examples are distributed under the http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/[UK's Open Government Licence] and copyright British Crown 2010.
