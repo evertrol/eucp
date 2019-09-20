@@ -2,14 +2,10 @@
 
 A notebook and data sharing system for climate research.
 
-This document is work in progress.
-
-Last update: 15-3-2019
-
 
 == Goals
 
-This repository contains and documents the infrastructure for a notebook and data sharing system for use within the European Climate Prediction (EUCP) project, a Horizon 2020 project.
+This repository contains and documents the infrastructure for a notebook and data sharing system for use within the https://eucp-project.eu[European Climate Prediction (EUCP) project], a Horizon 2020 project.
 
 The notebook system allows scientists to use a uniform interface to perform their analysis on climate data sets.
 It runs on the same server where the data is stored, or very close to a data server, removing the need to download the required data sets locally.
@@ -19,7 +15,9 @@ In addition, the analysis steps are to be saved (including history versioning) f
 
 == Setup
 
-For an overview of the architecture and configuration used, see the link:docs/README.adoc[docs directory].
+A more detailed setup guide provided in link:setup.adoc[the setup document].
+
+For an introduction and overview of the architecture, see the link:docs/README.adoc[docs directory].
 
 An introduction to Jupyter can be found in the link:docs/tutorial[tutorial section], while examples notebooks are available in the link:examples/[examples directory].
 
@@ -30,17 +28,17 @@ The details of the Docker image can be found in the link:docker/[Docker director
 == Resources
 
 The server and storage is hosted at the SURFsara (NLeSC partner) data center.
-The total amount of data storage available is (currently) 40 TB, and will be 100 TB later in the project.
+The total amount of data storage available is 100 TB.
 This includes the need for scratch space for individual users during analysis runs.
 
-The current setup is a Ubuntu virtual machine (VM), with eight cores.
+The current setup is a Ubuntu virtual machine (VM), with four cores.
 
 The storage uses CEPH datablocks.
 These will be made persistent, so that scratch space will persist between restarts of the VM.
-The home directories of the users will also be saved.
-These directories, however, should *not* be used or seen as a place for permanent storage: scripts and notebooks should be stored elsewhere, for example in (private) repositories.
+The home directories of the users are also persistent, on a separate (small) CEPH disk.
+This allows users to store notebooks and small, intermediate files, in their home directories.
 
-Some details about the system used can be found at https://doc.hpccloud.surfsara.nl[SURFsara HPC cloud documentation].
+Some details about the cloud system used can be found at https://doc.hpccloud.surfsara.nl[SURFsara HPC cloud documentation].
 
 
 
