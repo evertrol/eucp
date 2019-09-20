@@ -1,3 +1,8 @@
+- name: Generate Diffie Hellman parameters; takes a few minutes
+  shell: openssl dhparam -out /etc/ssl/certs/dhparam.pem 4096
+  args:
+    creates: /etc/ssl/certs/dhparam.pem
+
 - name: Test for existing certificate tar file
   local_action: stat path={{ servername }}-certs.tar
   become: false
