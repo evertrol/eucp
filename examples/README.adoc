@@ -1,6 +1,6 @@
 = Example climate analysis notebooks
 
-You can find the actual notebooks for these examples at https://github.com/nlesc/eucp/examples/.
+You can find the actual notebooks for these examples at the https://github.com/NLeSC/eucp/tree/master/examples[GitHub EUCP repository].
 
 .General statistics
 * link:statistics.html[General usage and statistics] (from a MET summer school in June 2018)
@@ -15,6 +15,9 @@ You can find the actual notebooks for these examples at https://github.com/nlesc
 * link:knmi-climate-scenario2014/rhine-temp-response.html[Rhine basin temperature response over time]
 
 .Iris examples
+
+The Iris examples are distributed under the http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/[UK's Open Government Licence] and copyright British Crown 2010.
+
 * link:iris/SOI-filtering.html[Applying a filter to a time-series]
 * link:iris/anomaly-log-colouring.html[Colouring anomaly data with logarithmic scaling]
 * link:iris/coriolis-plot.html[Deriving the Coriolis frequency over the globe]
